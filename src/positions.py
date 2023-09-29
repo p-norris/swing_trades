@@ -63,6 +63,7 @@ num_to_buy = len(df_1)
 allocation = 0
 expiration_1 = pd.Timedelta(1, "D")
 expiration_2 = pd.Timedelta(2, "D")
+
 for i in range(num_to_buy):
     allocation = balance / (count - i)
     stock = df_1.iloc[i]["STOCK"]

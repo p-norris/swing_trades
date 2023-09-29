@@ -1,4 +1,5 @@
 import pandas as pd
+import pandas_market_calendars as mc
 import numpy as np
 import yfinance as yf
 
@@ -25,12 +26,17 @@ df_history = pd.read_csv("history.csv")
 df_positions = pd.read_csv("positions.csv")
 df_all_sectors = pd.read_csv("tickers_sectors_6000.csv")
 
+# number of current positions
+num_positions = len(df_positions)
+
 # list of stocks currently owned used for candlestick and correlation graphs
-if len(df_positions) > 0:
+if num_positions > 0:
     tickers = df_positions["STOCK"].tolist()
+    displaying = "Currently Held Positions (stock tickers): "
 else:
     df_tickers = df_history["STOCK"].head(3)
     tickers = df_tickers.tolist()
+    displaying = "Recently Held Positions (stock tickers): "
 
 
 # function to get info from yahoo!
@@ -47,6 +53,9 @@ trade_dict = ticker_histories(tickers, history="1y")
 last_row = len(df_history) - 1
 opening_balance = df_history.iloc[last_row]["BALANCE"]
 
+# and the current balance
+balance = df_history.iloc[0]["BALANCE"]
+
 # colors to be used for interface
 this_green = "#198754"
 this_red = "#DC3545"
@@ -57,7 +66,6 @@ backgound_color = {"plot_bgcolor": "#FCFBFC"}
 ###  Card Data - Stats  ********************************************************        Card
 
 # variables used for cards
-balance = df_history.iloc[0]["BALANCE"]
 pct_gain = abs((((balance - opening_balance) / opening_balance) * 100).round(2))
 num_trades = df_history["STOCK"].count()
 successful_trades = df_history["Profit"].where(df_history["Profit"] > 0).count()
@@ -108,7 +116,7 @@ success_card = dbc.Card(
 # number of unsuccessful trades with percent loss
 fail_card = dbc.Card(
     dbc.CardBody(
-        [html.H4(f"{failed_trades} Lossers"), html.H6(f"{loss_trades}% Ave Loss")],
+        [html.H4(f"{failed_trades} Losers"), html.H6(f"{loss_trades}% Ave Loss")],
         className="border-start border-danger border-5",
     ),
     className="text-center m-2",
@@ -584,15 +592,6 @@ def sector_tree():
     hist_sect = history_sector[["Sector", "pct"]]
     sect_dict = hist_sect.to_dict("list")
 
-    # update the dictionary with <br> between sector names with more than one word
-    # so that the labels wrap in the treemap graphic on the interface
-    sect_dict["Basic <br> Materials"] = sect_dict.pop("Basic Materials", None)
-    sect_dict["Communication <br> Services"] = sect_dict.pop("Communication Services", None)
-    sect_dict["Consumer <br> Cyclical"] = sect_dict.pop("Consumer Cyclical", None)
-    sect_dict["Consumer <br> Defensive"] = sect_dict.pop("Consumer Defensive", None)
-    sect_dict["Financial <br> Services"] = sect_dict.pop("Financial Services", None)
-    sect_dict["Real <br> Estate"] = sect_dict.pop("Real Estate", None)
-
     # plotly code for putting together the treemap data
     # the treemap is configured from lists with corresponding elements
     parents, labels, values, color = (
@@ -655,7 +654,7 @@ current_positions["Target Price"] = current_positions["Target Price"].round(2)
 
 if len(current_positions) == 0:
     diff_dataset = "There are better days for trades. Sitting this one out until the market shapes up. \
-                   No new positions."
+        No new positions."
     padding = 30
 else:
     diff_dataset = ""
@@ -740,7 +739,7 @@ app.layout = dbc.Container(
                         Trades are determined by the stock's likelihood to reach a\
                         certain price point in the next trading session. Exit levels \
                         are generated based on daily highs following buy signals from the \
-                        stock's trading history."
+                        stock's trading history. All positions sold within two day."
                     ),
                     style={"padding-bottom": 20},
                 ),
@@ -826,30 +825,43 @@ app.layout = dbc.Container(
                 ## R4 - Third Column
                 dbc.Col(
                     [
-                        # radio buttons for selecting which stock to view in candlestick chart
-                        dcc.RadioItems(
-                            options=[
-                                {"label": tickers[0], "value": "position_0"},
-                                {"label": tickers[1], "value": "position_1"},
-                                {"label": tickers[2], "value": "position_2"},
-                            ],
-                            id="position",
-                            value="position_0",
-                            inline=True,
-                            style={
-                                "display": "flex",
-                                "margin": "auto",
-                                "width": "500px",
-                                "justify-content": "space-around",
-                            },
-                        ),
-                        # candlesticks with volume data per current positions
-                        dcc.Graph(
-                            id="candles",
-                            figure={},
-                            style={"paper_bgcolor": "#ECF3F9"},
-                            config={"displayModeBar": False},
-                        ),
+                        dbc.Row([
+                            dbc.Col([html.H5(displaying,
+                                             style={"width": "345px",
+                                                    # "padding-left": "15px",
+                                                    })]),
+                            dbc.Col([
+                                # radio buttons for selecting which stock to view in candlestick chart
+                                dcc.RadioItems(
+                                    options=[
+                                        {"label": tickers[0], "value": "position_0"},
+                                        {"label": tickers[1], "value": "position_1"},
+                                        {"label": tickers[2], "value": "position_2"},
+                                    ],
+                                    id="position",
+                                    value="position_0",
+                                    inline=True,
+                                    style={
+                                        "display": "flex",
+                                        "margin": "auto",
+                                        "width": "265px",
+                                        "justify-content": "space-around",
+                                        "padding-right": "45px",
+                                    },
+                                ),
+                            ]),
+
+                        ]),
+
+                        dbc.Row([  # candlesticks with volume data per current positions
+                            dcc.Graph(
+                                id="candles",
+                                figure={},
+                                style={"paper_bgcolor": "#ECF3F9"},
+                                config={"displayModeBar": False},
+                            ),
+                        ]),
+
                     ],
                     style={"width": "50%"},
                     xs=12,
@@ -873,12 +885,12 @@ app.layout = dbc.Container(
                             id="comparisons",
                             figure=vs_indices(),
                             config={"displayModeBar": False},
-                            style={"padding-top": 17, 'height': '78%'}
+                            style={"padding-top": 17, 'height': '75%'}
                         ),
                         html.P(
-                            "The algorithm is hypersensitive to market fluctuations. \
+                            "The Trades show a hypersensitivity to market fluctuations. \
                             More data may smooth out a bit of the wild swings, \
-                            but a gain or loss relative to the market may change often."
+                            but their bearing relative to the markets may still change sporadically."
                         ),
                     ],
                     xs=12,
@@ -1008,12 +1020,12 @@ app.layout = dbc.Container(
                 ]),
 
             ],
-                    xs=12,
-                    sm=12,
-                    md=8,
-                    lg=8,
-                    xl=8,
-                    xxl=8,
+                xs=12,
+                sm=12,
+                md=8,
+                lg=8,
+                xl=8,
+                xxl=8,
             ),
         ]),
     ]
