@@ -53,6 +53,9 @@ else:
 df_1 = pd.merge(df, df_buys, on="STOCK")
 df_1 = df_1.sort_values(["Close"], ascending=False, ignore_index=True)
 
+# how many trades need to be made?
+num_to_buy = len(df_1)
+
 # loop through each new purchase to add items to the
 # 'positions' dataset, one new row (nuro) at a time
 # the allocation will be the dollar amount per position to purchase
@@ -60,7 +63,7 @@ df_1 = df_1.sort_values(["Close"], ascending=False, ignore_index=True)
 allocation = 0
 expiration_1 = pd.Timedelta(1, "D")
 expiration_2 = pd.Timedelta(2, "D")
-for i in range(count):
+for i in range(num_to_buy):
     allocation = balance / (count - i)
     stock = df_1.iloc[i]["STOCK"]
     buy_date = pd.Timestamp.now()

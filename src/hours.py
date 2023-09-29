@@ -98,7 +98,7 @@ def market_hours():
 schedule.every().monday.at("09:15").do(market_hours)
 schedule.every().tuesday.at("09:15").do(market_hours)
 schedule.every().wednesday.at("09:15").do(market_hours)
-schedule.every().thursday.at("09:15").do(market_hours)
+schedule.every().thursday.at("11:34").do(market_hours)
 schedule.every().friday.at("09:15").do(market_hours)
 
 while True:
