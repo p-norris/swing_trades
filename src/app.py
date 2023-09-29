@@ -29,13 +29,25 @@ df_all_sectors = pd.read_csv("tickers_sectors_6000.csv")
 # number of current positions
 num_positions = len(df_positions)
 
-# list of stocks currently owned used for candlestick and correlation graphs
-if num_positions > 0:
+# list of stocks currently/recently owned used for candlestick and correlation graphs
+first_hist = df_history.iat[0, 0]
+second_hist = df_history.iat[1, 0]
+
+if num_positions == 3:
     tickers = df_positions["STOCK"].tolist()
     displaying = "Currently Held Positions (stock tickers): "
-else:
+elif num_positions == 2:
+    tickers = df_positions["STOCK"].tolist()
+    tickers.append(first_hist)
+    displaying = "Currently/Recently Held Stocks: "
+elif num_positions == 1:
+    tickers = df_positions["STOCK"].tolist()
+    tickers.append(first_hist)
+    tickers.append(second_hist)
+    displaying = "Currently/Recently Held Stocks: "
+elif num_positions == 0:
     df_tickers = df_history["STOCK"].head(3)
-    tickers = df_tickers.tolist()
+    tickers = df_tickers["STOCK"].tolist()
     displaying = "Recently Held Positions (stock tickers): "
 
 
@@ -180,15 +192,8 @@ for trade in tickers:
 ###  Correlation Data  *********************************************************        Correlation
 
 def position_correlations():
-    # tickers indicate the symbols for the current positions
-    if len(df_positions) > 0:
-        tickers = df_positions["STOCK"].tolist()
-    else:
-        df_tickers = df_history["STOCK"].head(3)
-        tickers = df_tickers.tolist()
-
     # num is used to distinguish the first dataframe from those
-    # that follow so that all the price close data can be mergede
+    # that follow so that all the price close data can be merged
     # into one dataframe, which is the purpose of the loop
     num = 0
     for ticker in tickers:
