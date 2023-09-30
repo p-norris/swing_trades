@@ -736,8 +736,9 @@ app.layout = dbc.Container(
             [
                 dbc.Col(
                     html.H5(
-                        "Depending on the market, between zero and three stocks are traded on a daily basis  \
-                        . Buy signals are generated on two conditions: 1) the closing price is greater than \
+                        "Depending on the market, between zero and three stocks are traded on a daily basis. \
+                        Buy signals are generated when both of the following two conditions are met: 1) \
+                        the closing price is greater than \
                         the 3-day moving average, and 2) the 3-day moving average is greater than \
                         the 6-, 13-, and 21-day moving averages. \
                         Trades are determined by the stock's likelihood to reach a\
