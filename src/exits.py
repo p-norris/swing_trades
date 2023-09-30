@@ -59,7 +59,7 @@ for position in positions:
                 profit,
                 pct_chg,
                 balance]
-        return nuro
+        return nuro, balance
 
 
     # updates the positions and history dataframes
@@ -88,7 +88,7 @@ for position in positions:
     for i in range(len(df)):
         if df.iloc[i]["Close"] >= high_price:
             sell_price = df.iloc[i]["Close"]
-            nuro = trade_record(sell_price, balance)
+            nuro, balance = trade_record(sell_price, balance)
             df_history, df_positions = update_datasets(nuro, df_history, df_positions)
             sold = True
             print('\nSold High\n')
@@ -96,7 +96,7 @@ for position in positions:
         elif i > 33:
             if df.iloc[i]["Close"] <= low_price:
                 sell_price = df.iloc[i]["Close"]
-                nuro = trade_record(sell_price, balance)
+                nuro, balance = trade_record(sell_price, balance)
                 df_history, df_positions = update_datasets(nuro, df_history, df_positions)
                 sold = True
                 print('\nSold Low\n')
@@ -108,7 +108,7 @@ for position in positions:
     if (sold is False) & (current_day == timed_out):
         row = len(df)
         sell_price = df.iloc[row]['Close']
-        nuro = trade_record(sell_price, balance)
+        nuro, balance = trade_record(sell_price, balance)
         df_history, df_positions = update_datasets(nuro, df_history, df_positions)
         print('\nTimed Out\n')
     elif (sold is False) & (current_day != timed_out):

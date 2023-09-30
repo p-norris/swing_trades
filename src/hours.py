@@ -3,8 +3,9 @@ import pandas_market_calendars as mc
 import schedule
 import subprocess
 import time
+from github import Github
 
-print("\n", "Starting the Schedule")
+print("\n", "Starting the Schedule", "\n")
 
 
 # main function from which other functions run
@@ -46,7 +47,7 @@ def market_hours():
     run_the_exits = open_time.iloc[0][2]
     run_the_scan = open_time.iloc[0][3]
     run_the_positions = open_time.iloc[0][4]
-    run_the_interface = open_time.iloc[0][5]
+    update_the_files = open_time.iloc[0][5]
 
     opening = pd.Timestamp(opening_at)
     todays_date = start_date.date()
@@ -69,6 +70,16 @@ def market_hours():
         subprocess.run(["python", "positions.py"])
         return schedule.CancelJob
 
+    # update github
+    def update_github():
+        g = Github('p-norris', 'f92eeec498t8mbkZ')
+        repo = g.get_user().get_repo('swing_trades')
+        contents_h = repo.get_contents('history.csv')
+        contents_p = repo.get_contents('positions.csv')
+        repo.update_file(contents_h.path, "updating file", contents_h, contents_h.sha, branch='src')
+        repo.update_file(contents_p.path, "updating file", contents_p, contents_p.sha, branch='src')
+        return schedule.CancelJob
+
     # if the market is open, schedule runs all the files
     # positions runs 8 minutes after the scan which takes a while
     # and the interface updates 1/10 of a minute later
@@ -76,30 +87,35 @@ def market_hours():
         schedule.every().monday.at(run_the_exits).do(run_exits)
         schedule.every().monday.at(run_the_scan).do(run_scan)
         schedule.every().monday.at(run_the_positions).do(run_positions)
+        schedule.every().monday.at(update_the_files).do(update_github)
 
         schedule.every().tuesday.at(run_the_exits).do(run_exits)
         schedule.every().tuesday.at(run_the_scan).do(run_scan)
         schedule.every().tuesday.at(run_the_positions).do(run_positions)
+        schedule.every().tuesday.at(update_the_files).do(update_github)
 
         schedule.every().wednesday.at(run_the_exits).do(run_exits)
         schedule.every().wednesday.at(run_the_scan).do(run_scan)
         schedule.every().wednesday.at(run_the_positions).do(run_positions)
+        schedule.every().wednesday.at(update_the_files).do(update_github)
 
         schedule.every().thursday.at(run_the_exits).do(run_exits)
         schedule.every().thursday.at(run_the_scan).do(run_scan)
         schedule.every().thursday.at(run_the_positions).do(run_positions)
+        schedule.every().thursday.at(update_the_files).do(update_github)
 
         schedule.every().friday.at(run_the_exits).do(run_exits)
         schedule.every().friday.at(run_the_scan).do(run_scan)
         schedule.every().friday.at(run_the_positions).do(run_positions)
+        schedule.every().friday.at(update_the_files).do(update_github)
 
 
 # master schedule that starts the process
-schedule.every().monday.at("12:00").do(market_hours)
-schedule.every().tuesday.at("12:00").do(market_hours)
-schedule.every().wednesday.at("12:00").do(market_hours)
-schedule.every().thursday.at("12:00").do(market_hours)
-schedule.every().friday.at("12:00").do(market_hours)
+schedule.every().monday.at("09:15").do(market_hours)
+schedule.every().tuesday.at("09:15").do(market_hours)
+schedule.every().wednesday.at("09:15").do(market_hours)
+schedule.every().thursday.at("09:15").do(market_hours)
+schedule.every().friday.at("09:15").do(market_hours)
 
 while True:
     schedule.run_pending()

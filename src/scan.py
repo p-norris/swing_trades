@@ -368,10 +368,12 @@ for ticker in tickers:
     # add the new row (nuro) to the final dataframe by concatenation
     final = pd.concat([final, temp_df])
 
-final = final.sort_values(
-    ["BUY", "Strength", "P"], ascending=[False, False, False]
-)
-final = final[final['BUY'] == 'Yes']
+if len(final) > 0:
+    final = final.sort_values(
+        ["BUY", "Strength", "P"], ascending=[False, False, False]
+    )
+    final = final[final['BUY'] == 'Yes']
+
 final.to_csv("scan.csv", index=False)
 
 time = pd.Timestamp.now()

@@ -1,5 +1,4 @@
 import pandas as pd
-import pandas_market_calendars as mc
 import numpy as np
 import yfinance as yf
 
