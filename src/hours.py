@@ -72,22 +72,28 @@ def market_hours():
 
     # update github
     def update_github():
-        g = Github('code')
+        g = Github('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')
         repo = g.get_user('p-norris').get_repo('swing_trades')
 
         contents_h = repo.get_contents('src/history.csv')
         contents_p = repo.get_contents('src/positions.csv')
+        contents_hrs = repo.get_contents('src/hours.py')
 
         his = 'C:/Users/phill/PycharmProjects/swing_trades/src/history.csv'
         pos = 'C:/Users/phill/PycharmProjects/swing_trades/src/positions.csv'
+        hrs = 'C:/Users/phill/PycharmProjects/swing_trades/src/hours.py'
 
-        with open(his) as file:
+        with open(his, "r") as file:
             new_h = file.read()
-        with open(pos) as file:
+        with open(pos, "r") as file:
             new_p = file.read()
+        with open(hrs, "r") as file:
+            new_hrs = file.read()
 
-        repo.update_file(his, "updating file", new_h, contents_h.sha, branch='main')
-        repo.update_file(pos, "updating file", new_p, contents_p.sha, branch='main')
+        repo.update_file(contents_h.path, "updating file", new_h, contents_h.sha)
+        repo.update_file(contents_p.path, "updating file", new_p, contents_p.sha)
+        repo.update_file(contents_hrs.path, "updating file", new_hrs, contents_hrs.sha)
+
         return schedule.CancelJob
 
     # if the market is open, schedule runs all the files
@@ -121,7 +127,7 @@ def market_hours():
 
 
 # master schedule that starts the process
-schedule.every().monday.at("09:15").do(market_hours)
+schedule.every().monday.at("01:51").do(market_hours)
 schedule.every().tuesday.at("09:15").do(market_hours)
 schedule.every().wednesday.at("09:15").do(market_hours)
 schedule.every().thursday.at("09:15").do(market_hours)
