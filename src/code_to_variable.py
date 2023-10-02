@@ -1,6 +1,16 @@
 import dash_mantine_components as dmc
 
 scan_file = dmc.Prism('''
+"""
+    The scan.py file downloads a year's worth of price data for
+    over 6,000 stocks. It then filters out stocks that do not
+    meet minimum criteria before generating moving averages data
+    and buy signals. It also determines price levels for selling
+    stocks. The data is sorted according to a few metrics and then
+    saved for the positions.py file to use in 'implementing' the 
+    trades.
+"""
+    
 import pandas as pd
 import numpy as np
 import yfinance as yf
@@ -390,6 +400,14 @@ print("\\n", time, "\\n", elapsed, "\\n")
 )
 
 positions_file = dmc.Prism('''
+"""
+    The positions.py file takes the scan.py information and
+    uses it to 'make purchases' of stocks that best fit this
+    trading strategy. It takes into account positions that it
+    is currently holding as well as the possibility that the
+    scan did not find enough good buys for the current day. 
+"""
+
 import pandas as pd
 import yfinance as yf
 import math
@@ -521,6 +539,18 @@ print("\\n", time, "\\n", elapsed, "\\n")
 )
 
 exits_file = dmc.Prism('''
+"""
+    The exits.py file sells the held position when an exit
+    criteria is met. Stocks are always sold the day after
+    purchase or the day after that. On the first of these
+    two days, the exit trigger for a loss is suspended so that
+    a high value (profitable) exit has enough time to occur.
+    However, on the second day, if the high exit does not occur
+    within the first 30 minutes of trading, the low value exit
+    (for a loss) goes into effect. If neither occur, the position
+    is sold at the end of this second day for market value.
+"""
+
 import pandas as pd
 import yfinance as yf
 
@@ -663,6 +693,11 @@ print("\\n", time, "\\n", elapsed, "\\n")
 )
 
 interface_file = dmc.Prism('''
+"""
+    Here is the code that produces the dashboard
+    you are currently viewing.
+"""
+
 import pandas as pd
 import numpy as np
 import yfinance as yf
@@ -1921,6 +1956,13 @@ if __name__ == "__main__":
 
 
 app_file = dmc.Prism('''
+"""
+    This files automates the execution of the
+    exits.py, scan.py, and positions.py files
+    on days when the markets are open, at the
+    appropriate times.
+"""
+
 import pandas as pd
 import pandas_market_calendars as mc
 
