@@ -1,6 +1,6 @@
 from github import Github
 
-g = Github('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')
+g = Github('code')
 repo = g.get_user('p-norris').get_repo('swing_trades')
 
 contents_h = repo.get_contents('src/history.csv')
