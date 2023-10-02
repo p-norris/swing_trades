@@ -72,7 +72,7 @@ def market_hours():
 
     # update github
     def update_github():
-        g = Github('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')
+        g = Github('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')
         repo = g.get_user('p-norris').get_repo('swing_trades')
 
         contents_h = repo.get_contents('src/history.csv')
@@ -127,7 +127,7 @@ def market_hours():
 
 
 # master schedule that starts the process
-schedule.every().monday.at("01:51").do(market_hours)
+schedule.every().monday.at("09:15").do(market_hours)
 schedule.every().tuesday.at("09:15").do(market_hours)
 schedule.every().wednesday.at("09:15").do(market_hours)
 schedule.every().thursday.at("09:15").do(market_hours)
