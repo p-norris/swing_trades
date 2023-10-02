@@ -73,11 +73,21 @@ def market_hours():
     # update github
     def update_github():
         g = Github('code')
-        repo = g.get_user().get_repo('swing_trades')
-        contents_h = repo.get_contents('history.csv')
-        contents_p = repo.get_contents('positions.csv')
-        repo.update_file('history.csv', "updating file", contents_h, contents_h.sha, branch='main')
-        repo.update_file('positions.csv', "updating file", contents_p, contents_p.sha, branch='main')
+        repo = g.get_user('p-norris').get_repo('swing_trades')
+
+        contents_h = repo.get_contents('src/history.csv')
+        contents_p = repo.get_contents('src/positions.csv')
+
+        his = 'C:/Users/phill/PycharmProjects/swing_trades/src/history.csv'
+        pos = 'C:/Users/phill/PycharmProjects/swing_trades/src/positions.csv'
+
+        with open(his) as file:
+            new_h = file.read()
+        with open(pos) as file:
+            new_p = file.read()
+
+        repo.update_file(his, "updating file", new_h, contents_h.sha, branch='main')
+        repo.update_file(pos, "updating file", new_p, contents_p.sha, branch='main')
         return schedule.CancelJob
 
     # if the market is open, schedule runs all the files
