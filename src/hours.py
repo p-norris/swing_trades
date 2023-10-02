@@ -72,7 +72,7 @@ def market_hours():
 
     # update github
     def update_github():
-        g = Github('p-norris', 'f92eeec498t8mbkZ')
+        g = Github('code')
         repo = g.get_user().get_repo('swing_trades')
         contents_h = repo.get_contents('history.csv')
         contents_p = repo.get_contents('positions.csv')
