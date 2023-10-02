@@ -441,7 +441,6 @@ def vs_indices():
     one_day = pd.Timedelta(1, "D")
     end = str(end + one_day)
     end = pd.to_datetime(end)
-    print('\n', end, '\n', type(end), '\n')
 
     # tickers for S&P 500, Dow Jones, and the Nasdaq
     indices = ["^GSPC", "^DJI", "^IXIC"]
@@ -568,8 +567,8 @@ def price_freq():
     histo.update_layout(
         backgound_color,
         margin=dict(l=20, r=0, t=5, b=50),
-        xaxis_title="Price",
-        yaxis_title="Count",
+        xaxis_title="Dollars",
+        yaxis_title="Number of Trades",
     )
 
     return histo

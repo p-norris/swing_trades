@@ -93,7 +93,7 @@ for position in positions:
             sold = True
             print('\nSold High\n')
             break
-        elif i > 33:
+        elif (current_day == timed_out) & (i > 33):  # updated to better reflect strategy on 23 Oct 2
             if df.iloc[i]["Close"] <= low_price:
                 sell_price = df.iloc[i]["Close"]
                 nuro, balance = trade_record(sell_price, balance)

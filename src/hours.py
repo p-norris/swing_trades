@@ -76,8 +76,8 @@ def market_hours():
         repo = g.get_user().get_repo('swing_trades')
         contents_h = repo.get_contents('history.csv')
         contents_p = repo.get_contents('positions.csv')
-        repo.update_file(contents_h.path, "updating file", contents_h, contents_h.sha, branch='src')
-        repo.update_file(contents_p.path, "updating file", contents_p, contents_p.sha, branch='src')
+        repo.update_file('history.csv', "updating file", contents_h, contents_h.sha, branch='main')
+        repo.update_file('positions.csv', "updating file", contents_p, contents_p.sha, branch='main')
         return schedule.CancelJob
 
     # if the market is open, schedule runs all the files

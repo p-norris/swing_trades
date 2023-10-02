@@ -371,16 +371,19 @@ for ticker in tickers:
     # add the new row (nuro) to the final dataframe by concatenation
     final = pd.concat([final, temp_df])
 
-final = final.sort_values(
-    ["BUY", "Strength", "P"], ascending=[False, False, False]
-)
-final = final[final['BUY'] == 'Yes']
+if len(final) > 0:
+    final = final.sort_values(
+        ["BUY", "Strength", "P"], ascending=[False, False, False]
+    )
+    final = final[final['BUY'] == 'Yes']
+
 final.to_csv("scan.csv", index=False)
 
 time = pd.Timestamp.now()
 time = time.floor(freq="S")
 elapsed = time - time1
 print("\\n", time, "\\n", elapsed, "\\n")
+
 ''',
     language="python",
     withLineNumbers=True,
@@ -407,7 +410,6 @@ balance = df_history.iloc[0]["BALANCE"]
 # only take enough positions to have three
 # the count is how many to buy in this iteration
 count = 3 - len(df_positions)
-
 
 # is there room to take new position?
 # max number of positions is three
@@ -442,6 +444,9 @@ else:
 df_1 = pd.merge(df, df_buys, on="STOCK")
 df_1 = df_1.sort_values(["Close"], ascending=False, ignore_index=True)
 
+# how many trades need to be made?
+num_to_buy = len(df_1)
+
 # loop through each new purchase to add items to the
 # 'positions' dataset, one new row (nuro) at a time
 # the allocation will be the dollar amount per position to purchase
@@ -449,7 +454,8 @@ df_1 = df_1.sort_values(["Close"], ascending=False, ignore_index=True)
 allocation = 0
 expiration_1 = pd.Timedelta(1, "D")
 expiration_2 = pd.Timedelta(2, "D")
-for i in range(count):
+
+for i in range(num_to_buy):
     allocation = balance / (count - i)
     stock = df_1.iloc[i]["STOCK"]
     buy_date = pd.Timestamp.now()
@@ -576,7 +582,7 @@ for position in positions:
                 profit,
                 pct_chg,
                 balance]
-        return nuro
+        return nuro, balance
 
 
     # updates the positions and history dataframes
@@ -605,18 +611,18 @@ for position in positions:
     for i in range(len(df)):
         if df.iloc[i]["Close"] >= high_price:
             sell_price = df.iloc[i]["Close"]
-            nuro = trade_record(sell_price, balance)
+            nuro, balance = trade_record(sell_price, balance)
             df_history, df_positions = update_datasets(nuro, df_history, df_positions)
             sold = True
-            print('\\nSold High\\n')
+            print('\nSold High\n')
             break
-        elif i > 33:
+        elif (current_day == timed_out) & (i > 33):  # updated to better reflect strategy on 23 Oct 2
             if df.iloc[i]["Close"] <= low_price:
                 sell_price = df.iloc[i]["Close"]
-                nuro = trade_record(sell_price, balance)
+                nuro, balance = trade_record(sell_price, balance)
                 df_history, df_positions = update_datasets(nuro, df_history, df_positions)
                 sold = True
-                print('\\nSold Low\\n')
+                print('\nSold Low\n')
                 break
 
     # if position does not meet either trade criteria,
@@ -625,11 +631,11 @@ for position in positions:
     if (sold is False) & (current_day == timed_out):
         row = len(df)
         sell_price = df.iloc[row]['Close']
-        nuro = trade_record(sell_price, balance)
+        nuro, balance = trade_record(sell_price, balance)
         df_history, df_positions = update_datasets(nuro, df_history, df_positions)
-        print('\\nTimed Out\\n')
+        print('\nTimed Out\n')
     elif (sold is False) & (current_day != timed_out):
-        print('\\nNEXT\\n')
+        print('\nNEXT\n')
         stock += 1
 
 # normalize the dates so that they are properly formatted for future use
@@ -669,6 +675,8 @@ from sklearn.linear_model import LinearRegression
 from dash import Dash, dcc, html, dash_table, Input, Output, callback
 import dash_bootstrap_components as dbc
 
+from code_to_variable import scan_file, positions_file, exits_file, interface_file, app_file
+
 ###############################################################################
 #
 # DATA ########################################################################
@@ -682,12 +690,30 @@ df_history = pd.read_csv("history.csv")
 df_positions = pd.read_csv("positions.csv")
 df_all_sectors = pd.read_csv("tickers_sectors_6000.csv")
 
-# list of stocks currently owned used for candlestick and correlation graphs
-if len(df_positions) > 0:
+# number of current positions
+num_positions = len(df_positions)
+
+# list of stocks currently/recently owned used for candlestick and correlation graphs
+first_hist = df_history.iat[0, 0]
+second_hist = df_history.iat[1, 0]
+
+if num_positions == 3:
     tickers = df_positions["STOCK"].tolist()
-else:
+    displaying = "Currently Held Positions (stock tickers): "
+elif num_positions == 2:
+    tickers = df_positions["STOCK"].tolist()
+    tickers.append(first_hist)
+    displaying = "Currently/Recently Held Stocks: "
+elif num_positions == 1:
+    tickers = df_positions["STOCK"].tolist()
+    tickers.append(first_hist)
+    tickers.append(second_hist)
+    displaying = "Currently/Recently Held Stocks: "
+elif num_positions == 0:
     df_tickers = df_history["STOCK"].head(3)
-    tickers = df_tickers.tolist()
+    tickers = df_tickers["STOCK"].tolist()
+    displaying = "Recently Held Positions (stock tickers): "
+
 
 # function to get info from yahoo!
 def ticker_histories(tickers, history):
@@ -695,12 +721,16 @@ def ticker_histories(tickers, history):
     dict = {idx: gp.xs(idx, level=0, axis=1) for idx, gp in df.groupby(level=0, axis=1)}
     return dict
 
+
 # call the data function and save
 trade_dict = ticker_histories(tickers, history="1y")
 
 # get the **starting** balance from the trade history
 last_row = len(df_history) - 1
 opening_balance = df_history.iloc[last_row]["BALANCE"]
+
+# and the current balance
+balance = df_history.iloc[0]["BALANCE"]
 
 # colors to be used for interface
 this_green = "#198754"
@@ -712,7 +742,6 @@ backgound_color = {"plot_bgcolor": "#FCFBFC"}
 ###  Card Data - Stats  ********************************************************        Card
 
 # variables used for cards
-balance = df_history.iloc[0]["BALANCE"]
 pct_gain = abs((((balance - opening_balance) / opening_balance) * 100).round(2))
 num_trades = df_history["STOCK"].count()
 successful_trades = df_history["Profit"].where(df_history["Profit"] > 0).count()
@@ -763,7 +792,7 @@ success_card = dbc.Card(
 # number of unsuccessful trades with percent loss
 fail_card = dbc.Card(
     dbc.CardBody(
-        [html.H4(f"{failed_trades} Lossers"), html.H6(f"{loss_trades}% Ave Loss")],
+        [html.H4(f"{failed_trades} Losers"), html.H6(f"{loss_trades}% Ave Loss")],
         className="border-start border-danger border-5",
     ),
     className="text-center m-2",
@@ -784,6 +813,7 @@ balance_card = dbc.Card(
     className="text-center m-2",
 )
 
+
 ###  Candlestick Data **********************************************************        Candlestick
 
 # current day Close needs to be compared with previous day's close
@@ -794,6 +824,7 @@ def close_lag(df):
     df = df.assign(Yesterday=yesterday)
     return df
 
+
 # this entire strategy is built on the idea that simple moving averages
 # can be useful predictors of a stock's future activity
 def rolling_MAs(df):
@@ -803,6 +834,7 @@ def rolling_MAs(df):
     ma_21 = df["Close"].rolling(21).mean().round(3).tolist()
     df = df.assign(MA3=ma_3, MA6=ma_6, MA13=ma_13, MA21=ma_21)
     return df
+
 
 # num is used in the naming scheme for current positions
 # tickers indicate the symbols for the current positions
@@ -818,20 +850,14 @@ for trade in tickers:
     df.to_csv(f"position_{num}.csv")
     num += 1
 
+
 ## The construction of the candlestick chart happens in the Callback below (beneath the Dashboard section)
 
 ###  Correlation Data  *********************************************************        Correlation
 
 def position_correlations():
-    # tickers indicate the symbols for the current positions
-    if len(df_positions) > 0:
-        tickers = df_positions["STOCK"].tolist()
-    else:
-        df_tickers = df_history["STOCK"].head(3)
-        tickers = df_tickers.tolist()
-
     # num is used to distinguish the first dataframe from those
-    # that follow so that all the price close data can be mergede
+    # that follow so that all the price close data can be merged
     # into one dataframe, which is the purpose of the loop
     num = 0
     for ticker in tickers:
@@ -1061,6 +1087,7 @@ def position_correlations():
 
     return corr_matrix
 
+
 ###  Line Chart Data  **********************************************************        Line
 
 def vs_indices():
@@ -1079,7 +1106,6 @@ def vs_indices():
     one_day = pd.Timedelta(1, "D")
     end = str(end + one_day)
     end = pd.to_datetime(end)
-    print('\n', end, '\n', type(end), '\n')
 
     # tickers for S&P 500, Dow Jones, and the Nasdaq
     indices = ["^GSPC", "^DJI", "^IXIC"]
@@ -1132,8 +1158,8 @@ def vs_indices():
         mode='lines',
         name='Dow',
         line=dict(color=this_green,
-                    width=1,
-                    dash='dash')
+                  width=1,
+                  dash='dash')
     ))
 
     fig.add_trace(go.Scatter(
@@ -1142,9 +1168,9 @@ def vs_indices():
         mode='lines',
         name='S&P 500',
         line=dict(color=this_red,
-                    width=1,
-                    dash='dot'
-                    )
+                  width=1,
+                  dash='dot'
+                  )
     ))
 
     fig.add_trace(go.Scatter(
@@ -1153,8 +1179,8 @@ def vs_indices():
         mode='lines',
         name='Nasdaq',
         line=dict(color=this_blue,
-                    width=1,
-                    dash='dashdot')
+                  width=1,
+                  dash='dashdot')
     ))
 
     fig.add_trace(go.Scatter(
@@ -1163,7 +1189,7 @@ def vs_indices():
         mode='lines',
         name='Trades',
         line=dict(color='black',
-                    width=1)
+                  width=1)
     ))
 
     fig.update_layout(
@@ -1186,6 +1212,7 @@ def vs_indices():
 
     return fig
 
+
 ###  Histogram Data  ***********************************************************        Histogram
 
 def price_freq():
@@ -1205,11 +1232,12 @@ def price_freq():
     histo.update_layout(
         backgound_color,
         margin=dict(l=20, r=0, t=5, b=50),
-        xaxis_title="Price",
-        yaxis_title="Count",
+        xaxis_title="Dollars",
+        yaxis_title="Number of Trades",
     )
 
     return histo
+
 
 ###  Treemap Data  *************************************************************        Treemap
 
@@ -1231,15 +1259,6 @@ def sector_tree():
     # convert two relevant columns of history_sector into dictionary
     hist_sect = history_sector[["Sector", "pct"]]
     sect_dict = hist_sect.to_dict("list")
-
-    # update the dictionary with <br> between sector names with more than one word
-    # so that the labels wrap in the treemap graphic on the interface
-    sect_dict["Basic <br> Materials"] = sect_dict.pop("Basic Materials", None)
-    sect_dict["Communication <br> Services"] = sect_dict.pop("Communication Services", None)
-    sect_dict["Consumer <br> Cyclical"] = sect_dict.pop("Consumer Cyclical", None)
-    sect_dict["Consumer <br> Defensive"] = sect_dict.pop("Consumer Defensive", None)
-    sect_dict["Financial <br> Services"] = sect_dict.pop("Financial Services", None)
-    sect_dict["Real <br> Estate"] = sect_dict.pop("Real Estate", None)
 
     # plotly code for putting together the treemap data
     # the treemap is configured from lists with corresponding elements
@@ -1291,6 +1310,7 @@ def sector_tree():
 
     return tree
 
+
 ###  Positions / Trade History Data Tables  ************************************        Data Tables
 
 # use the csv files for plotly data tables
@@ -1301,7 +1321,8 @@ current_positions = current_positions.drop(columns=["Hit Price", "Sell On 1", "S
 current_positions["Target Price"] = current_positions["Target Price"].round(2)
 
 if len(current_positions) == 0:
-    diff_dataset = "There are better days for trades. Sitting this one out until the market shapes up."
+    diff_dataset = "There are better days for trades. Sitting this one out until the market shapes up. \
+        No new positions."
     padding = 30
 else:
     diff_dataset = ""
@@ -1379,14 +1400,15 @@ app.layout = dbc.Container(
             [
                 dbc.Col(
                     html.H5(
-                        "Depending on the market, between zero and three stocks are traded on a daily basis  \
-                        . Buy signals are generated on two conditions: 1) the closing price is greater than \
+                        "Depending on the market, between zero and three stocks are traded on a daily basis. \
+                        Buy signals are generated when both of the following two conditions are met: 1) \
+                        the closing price is greater than \
                         the 3-day moving average, and 2) the 3-day moving average is greater than \
                         the 6-, 13-, and 21-day moving averages. \
                         Trades are determined by the stock's likelihood to reach a\
                         certain price point in the next trading session. Exit levels \
                         are generated based on daily highs following buy signals from the \
-                        stock's trading history."
+                        stock's trading history. All positions sold within two day."
                     ),
                     style={"padding-bottom": 20},
                 ),
@@ -1434,13 +1456,13 @@ app.layout = dbc.Container(
                                     },
                                     style_cell_conditional=[
                                         {'if': {'column_id': 'STOCK'},
-                                            'width': '60px'},
+                                         'width': '60px'},
                                         {'if': {'column_id': 'Buy Date'},
-                                            'width': '100px'},
+                                         'width': '100px'},
                                         {'if': {'column_id': 'Shares'},
-                                            'width': '60px'},
+                                         'width': '60px'},
                                         {'if': {'column_id': 'Target Price'},
-                                            'width': '70px'},
+                                         'width': '70px'},
                                     ],
                                     fill_width=True,
                                 ),
@@ -1472,30 +1494,43 @@ app.layout = dbc.Container(
                 ## R4 - Third Column
                 dbc.Col(
                     [
-                        # radio buttons for selecting which stock to view in candlestick chart
-                        dcc.RadioItems(
-                            options=[
-                                {"label": tickers[0], "value": "position_0"},
-                                {"label": tickers[1], "value": "position_1"},
-                                {"label": tickers[2], "value": "position_2"},
-                            ],
-                            id="position",
-                            value="position_0",
-                            inline=True,
-                            style={
-                                "display": "flex",
-                                "margin": "auto",
-                                "width": "500px",
-                                "justify-content": "space-around",
-                            },
-                        ),
-                        # candlesticks with volume data per current positions
-                        dcc.Graph(
-                            id="candles",
-                            figure={},
-                            style={"paper_bgcolor": "#ECF3F9"},
-                            config={"displayModeBar": False},
-                        ),
+                        dbc.Row([
+                            dbc.Col([html.H5(displaying,
+                                             style={"width": "345px",
+                                                    # "padding-left": "15px",
+                                                    })]),
+                            dbc.Col([
+                                # radio buttons for selecting which stock to view in candlestick chart
+                                dcc.RadioItems(
+                                    options=[
+                                        {"label": tickers[0], "value": "position_0"},
+                                        {"label": tickers[1], "value": "position_1"},
+                                        {"label": tickers[2], "value": "position_2"},
+                                    ],
+                                    id="position",
+                                    value="position_0",
+                                    inline=True,
+                                    style={
+                                        "display": "flex",
+                                        "margin": "auto",
+                                        "width": "265px",
+                                        "justify-content": "space-around",
+                                        "padding-right": "45px",
+                                    },
+                                ),
+                            ]),
+
+                        ]),
+
+                        dbc.Row([  # candlesticks with volume data per current positions
+                            dcc.Graph(
+                                id="candles",
+                                figure={},
+                                style={"paper_bgcolor": "#ECF3F9"},
+                                config={"displayModeBar": False},
+                            ),
+                        ]),
+
                     ],
                     style={"width": "50%"},
                     xs=12,
@@ -1519,11 +1554,12 @@ app.layout = dbc.Container(
                             id="comparisons",
                             figure=vs_indices(),
                             config={"displayModeBar": False},
-                            style={"padding-top": 17, 'height': '78%'}
+                            style={"padding-top": 17, 'height': '75%'}
                         ),
                         html.P(
-                            "Early assessment indicates a hypersensitivity to market fluctuations. \
-                            More data may prove to smooth out a bit of the wild swings."
+                            "The Trades show a hypersensitivity to market fluctuations. \
+                            More data may smooth out a bit of the wild swings, \
+                            but their bearing relative to the markets may still change sporadically."
                         ),
                     ],
                     xs=12,
@@ -1566,9 +1602,9 @@ app.layout = dbc.Container(
                         ),
                         html.P(
                             "The histograms shed some light on the stock's price history. \
-                        The scatter plots indicate how closely each pair are correlated. \
-                        Ideally, r-values are closer to zero than 1 or -1 so that trading \
-                        risk is spread out among multiple stocks."
+                       The scatter plots indicate how closely each pair are correlated. \
+                       Ideally, r-values are closer to zero than 1 or -1 so that trading \
+                       risk is spread out among multiple stocks."
                         ),
                     ],
                     xs=12,
@@ -1614,9 +1650,10 @@ app.layout = dbc.Container(
         dbc.Row(
             [
                 html.H6(
-                    "This dashboard automatically update after each trading session.",
+                    "This dashboard updates in the evening after each trading session.",
                     className="text-center",
                 ),
+
                 html.A(
                     "Find me on LinkedIn.",
                     href="https://www.linkedin.com/in/phil-norris-data-science/",
@@ -1624,10 +1661,45 @@ app.layout = dbc.Container(
                     target="_blank"
                 ),
             ],
-            style={"padding-bottom": 25},
+            style={"padding-bottom": 75},
         ),
+
+        ### EIGHTH ROW - tabs with the code for data and interface
+        dbc.Row([
+            dbc.Col([
+                html.H6(
+                    "The code that generates the data and runs this dashboard can be viewed below."
+                ),
+                dcc.Tabs([
+                    dcc.Tab(label='scan.py', children=[
+                        scan_file
+                    ]),
+                    dcc.Tab(label='positions.py', children=[
+                        positions_file
+                    ]),
+                    dcc.Tab(label='exits.py', children=[
+                        exits_file
+                    ]),
+                    dcc.Tab(label='interface.py', children=[
+                        interface_file
+                    ]),
+                    dcc.Tab(label='app.py', children=[
+                        app_file
+                    ]),
+                ]),
+
+            ],
+                xs=12,
+                sm=12,
+                md=8,
+                lg=8,
+                xl=8,
+                xxl=8,
+            ),
+        ]),
     ]
 )
+
 
 ###############################################################################
 #
@@ -1838,8 +1910,9 @@ def plot_candles(position):
 
     return fig
 
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run_server(debug=False)
 
 ''',
     language="python",
