@@ -46,7 +46,7 @@ elif num_positions == 1:
     displaying = "Currently/Recently Held Stocks: "
 elif num_positions == 0:
     df_tickers = df_history["STOCK"].head(3)
-    tickers = df_tickers["STOCK"].tolist()
+    tickers = df_tickers.tolist()
     displaying = "Recently Held Positions (stock tickers): "
 
 
