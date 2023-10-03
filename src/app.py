@@ -928,7 +928,7 @@ app.layout = dbc.Container(
                 ## R5 - Third Column - correlation matrix
                 dbc.Col(
                     [
-                        html.H5("Correlation Matrix for Current Positions"),
+                        html.H5("Correlation Matrix for above Positions"),
                         dcc.Graph(
                             id="corr_matrix",
                             figure=position_correlations(),
