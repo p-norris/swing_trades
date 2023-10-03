@@ -540,7 +540,7 @@ print("\\n", time, "\\n", elapsed, "\\n")
 
 exits_file = dmc.Prism('''
 """
-    The exits.py file sells the held position when an exit
+    The exits.py file 'sells' the held position when an exit
     criteria is met. Stocks are always sold the day after
     purchase or the day after that. On the first of these
     two days, the exit trigger for a loss is suspended so that
@@ -746,7 +746,7 @@ elif num_positions == 1:
     displaying = "Currently/Recently Held Stocks: "
 elif num_positions == 0:
     df_tickers = df_history["STOCK"].head(3)
-    tickers = df_tickers["STOCK"].tolist()
+    tickers = df_tickers.tolist()
     displaying = "Recently Held Positions (stock tickers): "
 
 
@@ -1957,10 +1957,9 @@ if __name__ == "__main__":
 
 app_file = dmc.Prism('''
 """
-    This files automates the execution of the
-    exits.py, scan.py, and positions.py files
-    on days when the markets are open, at the
-    appropriate times.
+    This file automates the execution of the exits.py,
+    scan.py, and positions.py files on days when the 
+    markets are open, at the appropriate times.
 """
 
 import pandas as pd
