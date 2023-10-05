@@ -25,6 +25,12 @@ df_history = pd.read_csv("history.csv")
 df_positions = pd.read_csv("positions.csv")
 df_all_sectors = pd.read_csv("tickers_sectors_6000.csv")
 
+# get the dates from the trade history to use with card data and indices
+df_h = pd.read_csv("history.csv")
+df_h.drop_duplicates(subset=['Sell Date'], keep='first', inplace=True)
+
+num_trading_sessions = len(df_h) - 1
+
 # number of current positions
 num_positions = len(df_positions)
 
@@ -109,6 +115,8 @@ number_card = dbc.Card(
     dbc.CardBody(
         [
             html.H4(f"{num_trades} Trades"),
+            html.P(f"in {num_trading_sessions} trading days"),
+            #html.P("of trading"),
         ],
         className="border-start border-info border-5",
     ),
@@ -118,7 +126,8 @@ number_card = dbc.Card(
 # number of successful trades with percent gain
 success_card = dbc.Card(
     dbc.CardBody(
-        [html.H4(f"{successful_trades} Winners"), html.H6(f"{gain_trades}% Ave Gain")],
+        [html.H4(f"{successful_trades} Winners"),
+         html.H6(f"{gain_trades}% Ave Gain")],
         className="border-start border-success border-5",
     ),
     className="text-center m-2",
@@ -127,7 +136,8 @@ success_card = dbc.Card(
 # number of unsuccessful trades with percent loss
 fail_card = dbc.Card(
     dbc.CardBody(
-        [html.H4(f"{failed_trades} Losers"), html.H6(f"{loss_trades}% Ave Loss")],
+        [html.H4(f"{failed_trades} Losers"),
+         html.H6(f"{loss_trades}% Ave Loss")],
         className="border-start border-danger border-5",
     ),
     className="text-center m-2",
@@ -430,10 +440,8 @@ def vs_indices():
     # and this program's trading history as percent change since
     # the trading history's beginning
 
-    # get the dates from the trade history to use with indices
-    df_h = pd.read_csv("history.csv")
-    df_h.drop_duplicates(subset=['Sell Date'], keep='first', inplace=True)
-
+    # using df_h (history without duplicate dates)
+    # from global data
     here = len(df_h) - 1
     start = df_h.iloc[here]['Buy Date']
     end = df_h.iloc[0]['Sell Date']
@@ -656,8 +664,8 @@ current_positions = current_positions.drop(columns=["Hit Price", "Sell On 1", "S
 current_positions["Target Price"] = current_positions["Target Price"].round(2)
 
 if len(current_positions) == 0:
-    diff_dataset = "There are better days for trades. Sitting this one out until the market shapes up. \
-        No new positions."
+    diff_dataset = "No new positions. There are better days for trades. \
+                    Sitting this one out until the market shapes up."
     padding = 30
 else:
     diff_dataset = ""
@@ -735,15 +743,18 @@ app.layout = dbc.Container(
             [
                 dbc.Col(
                     html.H5(
-                        "Depending on the market, between zero and three stocks are traded on a daily basis. \
+                        "Can a simple strategy turn a profit in an age of sophisticated algorithmic trading? Let's see. \
+                        Here's the plan: \
+                        Depending on the market, between zero and three stocks are traded on a daily basis. \
                         Buy signals are generated when both of the following two conditions are met: 1) \
                         the closing price is greater than \
                         the 3-day moving average, and 2) the 3-day moving average is greater than \
                         the 6-, 13-, and 21-day moving averages. \
                         Trades are determined by the stock's likelihood to reach a\
-                        certain price point in the next trading session. Exit levels \
+                        certain price point in the next trading session. Sell prices \
                         are generated based on daily highs following buy signals from the \
-                        stock's trading history. All positions sold within two day."
+                        stock's trading history. All positions are sold within two days. The dashboard below \
+                        illustrates basic information regarding this strategy."
                     ),
                     style={"padding-bottom": 20},
                 ),
@@ -801,7 +812,8 @@ app.layout = dbc.Container(
                                     ],
                                     fill_width=True,
                                 ),
-                                html.H6(diff_dataset, style={"padding-bottom": padding}, )
+                                html.H6(diff_dataset, style={"padding-bottom": padding,
+                                                             "color": this_blue}, )
                             ]
                         ),
                         # Price Histogram
