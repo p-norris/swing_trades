@@ -43,11 +43,11 @@ def market_hours():
     print('\n', open_time, '\n')
 
     # save times as variables
-    opening_at = open_time.iloc[0][0]
-    run_the_exits = open_time.iloc[0][2]
-    run_the_scan = open_time.iloc[0][3]
-    run_the_positions = open_time.iloc[0][4]
-    update_the_files = open_time.iloc[0][5]
+    opening_at = open_time.iloc[0, 0]
+    run_the_exits = open_time.iloc[0, 2]
+    run_the_scan = open_time.iloc[0, 3]
+    run_the_positions = open_time.iloc[0, 4]
+    update_the_files = open_time.iloc[0, 5]
 
     opening = pd.Timestamp(opening_at)
     todays_date = start_date.date()
@@ -72,33 +72,30 @@ def market_hours():
 
     # update github
     def update_github():
-        g = Github('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')
+        g = Github('token')
         repo = g.get_user('p-norris').get_repo('swing_trades')
 
         contents_h = repo.get_contents('src/history.csv')
         contents_p = repo.get_contents('src/positions.csv')
-        contents_hrs = repo.get_contents('src/hours.py')
 
         his = 'C:/Users/phill/PycharmProjects/swing_trades/src/history.csv'
         pos = 'C:/Users/phill/PycharmProjects/swing_trades/src/positions.csv'
-        hrs = 'C:/Users/phill/PycharmProjects/swing_trades/src/hours.py'
 
         with open(his, "r") as file:
             new_h = file.read()
         with open(pos, "r") as file:
             new_p = file.read()
-        with open(hrs, "r") as file:
-            new_hrs = file.read()
 
         repo.update_file(contents_h.path, "updating file", new_h, contents_h.sha)
         repo.update_file(contents_p.path, "updating file", new_p, contents_p.sha)
-        repo.update_file(contents_hrs.path, "updating file", new_hrs, contents_hrs.sha)
+
+        print('\nGitHub has been updated.\n')
 
         return schedule.CancelJob
 
     # if the market is open, schedule runs all the files
     # positions runs 8 minutes after the scan which takes a while
-    # and the interface updates 1/10 of a minute later
+    # and the interface updates 1/6 of a minute later
     if trading_day:
         schedule.every().monday.at(run_the_exits).do(run_exits)
         schedule.every().monday.at(run_the_scan).do(run_scan)
@@ -127,11 +124,11 @@ def market_hours():
 
 
 # master schedule that starts the process
-schedule.every().monday.at("09:15").do(market_hours)
-schedule.every().tuesday.at("09:15").do(market_hours)
-schedule.every().wednesday.at("09:15").do(market_hours)
-schedule.every().thursday.at("09:15").do(market_hours)
-schedule.every().friday.at("09:15").do(market_hours)
+schedule.every().monday.at("12:30").do(market_hours)
+schedule.every().tuesday.at("12:30").do(market_hours)
+schedule.every().wednesday.at("12:30").do(market_hours)
+schedule.every().thursday.at("12:30").do(market_hours)
+schedule.every().friday.at("12:30").do(market_hours)
 
 while True:
     schedule.run_pending()
