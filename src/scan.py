@@ -236,39 +236,11 @@ def safe_gain(df, px, nuro):
     return pxClose, nuro
 
 
-# determine the exit price based on loss history
-def take_the_hit(pxClose, nuro, df):
-    # loss on first day after close
-    df["loss_pct_1"] = np.where(
-        (df["Trigger"] == "Loss"), ((df["Max1"] - df["Close"]) / df["Close"]), 0
-    )
-
-    # loss on second day after close
-    df["loss_pct_2"] = np.where(
-        (df["Trigger"] == "Loss"), ((df["Max2"] - df["Close"]) / df["Close"]), 0
-    )
-
-    # occasionally, a stock will generate no losses
-    # so, to avoid dividing by zero:
-    l0 = list(filter(None, df["loss_pct_1"]))
-    l1 = list(filter(None, df["loss_pct_2"]))
-    l1 = [n for n in l1 if n < 0]
-    if l0 == 0:
-        return -1, -1, -1
-    if l1 == 0:
-        return -1, -1, -1
-
-    # get the mean for each day after close
-    loss_mean_1 = sum(l0) / len(l0)
-    loss_mean_2 = sum(l1) / len(l0)
-    hit_pct = ((loss_mean_1 + loss_mean_2) / 2) * 0.25  # percentage of the mean
-
-    # safe-guards
-    if hit_pct < -0.0225:
-        hit_pct = -0.0225
-    if np.isnan(hit_pct):
-        hit_pct = -0.0225  # in case of yfinance error
-
+# several exit strategies have been tested, but
+# none have proved to be successful, so the exit
+# will be determined by a fixed percentage
+def take_the_hit(nuro):
+    hit_pct = -0.025
     take_hit = pxClose.iloc[-1] * (1 + hit_pct)  # this is the losing exit price target
     nuro.append(take_hit)
     return nuro
@@ -348,7 +320,7 @@ for ticker in tickers:
 
     # HitAt - downside price for exiting the position
     # based on sufficient history and a max of 2.25% loss
-    nuro = take_the_hit(pxClose, nuro, df)
+    nuro = take_the_hit(nuro)
 
     temp_df = pd.DataFrame(
         [nuro],
