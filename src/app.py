@@ -569,6 +569,7 @@ def price_freq():
                 marker_color=this_green,
                 marker_line_width=1,
                 marker_line_color="black",
+                nbinsx=30,
             )
         ]
     )
