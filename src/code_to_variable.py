@@ -35,7 +35,7 @@ net = 1.009
 # function to get stock data from yfinance
 def ticker_histories(tickers, history):
     df = yf.download(tickers, group_by="ticker", period=history)
-    dict = {idx: gp.xs(idx, level=0, axis=1) for idx, gp in df.groupby(level=0, axis=1)}
+    dict = {idx: gp.xs(idx, level=1) for idx, gp in df.stack(level=0).groupby(level=1)}
     return dict
 
 
@@ -43,13 +43,9 @@ def ticker_histories(tickers, history):
 def price_threshold(df):
     ave_price_1 = df['Close'].rolling(15).mean()
     ave_price_2 = df['Close'].rolling(100).mean()
-    df = df.assign(ave_price_1=ave_price_1)
-    df = df.assign(ave_price_2=ave_price_2)
-    p_1 = df['ave_price_1'].to_numpy()
-    p_2 = df['ave_price_2'].to_numpy()
 
-    ap_1 = p_1[-1]
-    ap_2 = p_2[-1]
+    ap_1 = ave_price_1.iloc[-1]
+    ap_2 = ave_price_2.iloc[-1]
 
     if (ap_1 >= 1) & (ap_2 >= 1):
         return True
@@ -59,15 +55,14 @@ def price_threshold(df):
 # does the stock meet the minimum volume requirement?
 def volume_threshold(df):
     Vol40 = df["Volume"].rolling(40).mean()
-    df = df.assign(Vol40=Vol40)
-    V = df["Vol40"].to_numpy()
-    AV = V[-1]
+    AV = Vol40.iloc[-1]
     if AV >= 350_000:
         return True
     return False
 
 
 # does the stock meet the minimum volatility requirement?
+# yfinance occasionally returns nan -- out of date issue
 def volatility_threshold(df):
     volati_list = df['Close'].tolist()
     try:
@@ -249,40 +244,10 @@ def safe_gain(df, px, nuro):
     return pxClose, nuro
 
 
-# determine the exit price based on loss history
+# determine the exit price
 def take_the_hit(pxClose, nuro, df):
-    # loss on first day after close
-    df["loss_pct_1"] = np.where(
-        (df["Trigger"] == "Loss"), ((df["Max1"] - df["Close"]) / df["Close"]), 0
-    )
-
-    # loss on second day after close
-    df["loss_pct_2"] = np.where(
-        (df["Trigger"] == "Loss"), ((df["Max2"] - df["Close"]) / df["Close"]), 0
-    )
-
-    # occasionally, a stock will generate no losses
-    # so, to avoid dividing by zero:
-    l0 = list(filter(None, df["loss_pct_1"]))
-    l1 = list(filter(None, df["loss_pct_2"]))
-    l1 = [n for n in l1 if n < 0]
-    if l0 == 0:
-        return -1, -1, -1
-    if l1 == 0:
-        return -1, -1, -1
-
-    # get the mean for each day after close
-    loss_mean_1 = sum(l0) / len(l0)
-    loss_mean_2 = sum(l1) / len(l0)
-    hit_pct = ((loss_mean_1 + loss_mean_2) / 2) * 0.25  # percentage of the mean
-
-    # safe-guards
-    if hit_pct < -0.0225:
-        hit_pct = -0.0225
-    if np.isnan(hit_pct):
-        hit_pct = -0.0225  # in case of yfinance error
-
-    take_hit = pxClose.iloc[-1] * (1 + hit_pct)  # this is the losing exit price target
+    hit_pct = -0.0225
+    take_hit = pxClose.iloc[-1] * (1 + hit_pct)
     nuro.append(take_hit)
     return nuro
 
