@@ -625,7 +625,7 @@ for position in positions:
     # the 'stock' variable for the next position
     if (sold is False) & (current_day == timed_out):
         row = len(df)
-        sell_price = df.iloc[row]['Close']
+        sell_price = df.iloc[i]['Close']
         nuro, balance = trade_record(sell_price, balance)
         df_history, df_positions = update_datasets(nuro, df_history, df_positions)
         print('\nTimed Out\n')
@@ -718,7 +718,7 @@ elif num_positions == 0:
 # function to get info from yahoo!
 def ticker_histories(tickers, history):
     df = yf.download(tickers, group_by="ticker", period=history, interval="1d")
-    dict = {idx: gp.xs(idx, level=0, axis=1) for idx, gp in df.groupby(level=0, axis=1)}
+    dict = {idx: gp.xs(idx, level=1) for idx, gp in df.stack(level=0).groupby(level=1)}
     return dict
 
 
