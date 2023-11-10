@@ -59,7 +59,7 @@ elif num_positions == 0:
 # function to get info from yahoo!
 def ticker_histories(tickers, history):
     df = yf.download(tickers, group_by="ticker", period=history, interval="1d")
-    dict = {idx: gp.xs(idx, level=0, axis=1) for idx, gp in df.groupby(level=0, axis=1)}
+    dict = {idx: gp.xs(idx, level=1) for idx, gp in df.stack(level=0).groupby(level=1)}
     return dict
 
 
