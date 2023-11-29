@@ -534,16 +534,18 @@ if len(df_positions) == 0:
     exit("Got nothing to trade. Must be a bad market.")
 
 # establish necessary variables
+new_positions = df_scan['STOCK'].tolist()  # potential buys for go_for_a_run()
+
 positions = df_positions["STOCK"].tolist()  # list of stocks to sell
 
-timed_out = df_positions.iloc[0]['Sell On 2']  # sell date when target isn't reached
+timed_out = df_positions.iloc[0]["Sell On 2"]  # sell date when target isn't reached
 
 balance = df_history.iloc[0]["BALANCE"]  # get balance for updating sells
 
 sectors_dict = dict(zip(df_all_sectors.SYMBOL,  # create dict of sectors for dashboard
                         df_all_sectors.SECTOR))
 
-current_day = pd.Timestamp.now()  # current date for sells / trade history
+current_day = str(pd.Timestamp.now().date())  # current date for sells / trade history
 
 # loop through each of the stocks in the positions list
 # to determine trade and value, then record the exchange
@@ -552,6 +554,24 @@ current_day = pd.Timestamp.now()  # current date for sells / trade history
 # from a particular 'stock' from the positions list
 stock = 0
 for position in positions:
+
+    # if the new scan returns the same ticker
+    # that is already being held, keep it for
+    # another cycle
+    def go_for_a_run(position, new_positions, df_positions):
+        if position in new_positions:
+            date_1 = pd.to_datetime(df_positions['Sell On 1'])
+            date_2 = pd.to_datetime(df_positions['Sell On 2'])
+            expiration = pd.Timedelta(1, "D")
+            run_day_one = str(pd.to_datetime(date_1 + expiration, unit='D'))
+            run_day_two = str(pd.to_datetime(date_2 + expiration, unit='D'))
+            df_positions['Sell On 1'] = np.where(df_positions['STOCK'] == position,
+                                                 run_day_one, df_positions['Sell On 1'])
+            df_positions['Sell On 2'] = np.where(df_positions['STOCK'] == position,
+                                                 run_day_two, df_positions['Sell On 2'])
+            df_positions.to_csv("positions.csv", index=False)
+            return True
+
 
     # saves trade data in row format to add to history file
     def trade_record(sell_price, balance):
@@ -591,6 +611,12 @@ for position in positions:
         return df_history, df_positions
 
 
+    # has a position been listed as a buy for another day?
+    # if so, don't sell it and extent the sell dates
+    running = go_for_a_run(position, new_positions, df_positions)
+    if running:
+        continue
+
     # get trade history for one day per minute from yahoo!
     df = yf.download(position, period="1d", interval="1m")
 
@@ -625,7 +651,7 @@ for position in positions:
     # the 'stock' variable for the next position
     if (sold is False) & (current_day == timed_out):
         row = len(df)
-        sell_price = df.iloc[i]['Close']
+        sell_price = df.iloc[position]['Close']
         nuro, balance = trade_record(sell_price, balance)
         df_history, df_positions = update_datasets(nuro, df_history, df_positions)
         print('\nTimed Out\n')
