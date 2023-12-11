@@ -2026,25 +2026,10 @@ def market_hours():
     # positions runs 8 minutes after the scan which takes a while
     # and the interface updates 1/10 of a minute later
     if trading_day:
-        schedule.every().monday.at(run_the_exits).do(run_exits)
-        schedule.every().monday.at(run_the_scan).do(run_scan)
-        schedule.every().monday.at(run_the_positions).do(run_positions)
+        schedule.every().day.at(run_the_exits).do(run_exits)
+        schedule.every().day.at(run_the_scan).do(run_scan)
+        schedule.every().day.at(run_the_positions).do(run_positions)
 
-        schedule.every().tuesday.at(run_the_exits).do(run_exits)
-        schedule.every().tuesday.at(run_the_scan).do(run_scan)
-        schedule.every().tuesday.at(run_the_positions).do(run_positions)
-
-        schedule.every().wednesday.at(run_the_exits).do(run_exits)
-        schedule.every().wednesday.at(run_the_scan).do(run_scan)
-        schedule.every().wednesday.at(run_the_positions).do(run_positions)
-
-        schedule.every().thursday.at(run_the_exits).do(run_exits)
-        schedule.every().thursday.at(run_the_scan).do(run_scan)
-        schedule.every().thursday.at(run_the_positions).do(run_positions)
-
-        schedule.every().friday.at(run_the_exits).do(run_exits)
-        schedule.every().friday.at(run_the_scan).do(run_scan)
-        schedule.every().friday.at(run_the_positions).do(run_positions)
 
 # master schedule that starts the process
 schedule.every().monday.at("09:15").do(market_hours)
