@@ -1,3 +1,9 @@
+# scan - 5
+# positions - 373
+# exits - 514
+# interface - 696
+# app - 1960
+
 import dash_mantine_components as dmc
 
 scan_file = dmc.Prism('''
@@ -364,6 +370,8 @@ print("\\n", time, "\\n", elapsed, "\\n")
     withLineNumbers=True,
 )
 
+                                                                        # positions
+
 positions_file = dmc.Prism('''
 """
     The positions.py file takes the scan.py information and
@@ -503,6 +511,8 @@ print("\\n", time, "\\n", elapsed, "\\n")
     withLineNumbers=True,
 )
 
+                                                                        # exits
+
 exits_file = dmc.Prism('''
 """
     The exits.py file 'sells' the held position when an exit
@@ -563,8 +573,8 @@ for position in positions:
             date_1 = pd.to_datetime(df_positions['Sell On 1'])
             date_2 = pd.to_datetime(df_positions['Sell On 2'])
             expiration = pd.Timedelta(1, "D")
-            run_day_one = str(pd.to_datetime(date_1 + expiration, unit='D'))
-            run_day_two = str(pd.to_datetime(date_2 + expiration, unit='D'))
+            run_day_one = str(pd.to_datetime(date_1 + expiration).date())
+            run_day_two = str(pd.to_datetime(date_2 + expiration).date())
             df_positions['Sell On 1'] = np.where(df_positions['STOCK'] == position,
                                                  run_day_one, df_positions['Sell On 1'])
             df_positions['Sell On 2'] = np.where(df_positions['STOCK'] == position,
@@ -682,6 +692,8 @@ print("\\n", time, "\\n", elapsed, "\\n")
     language="python",
     withLineNumbers=True,
 )
+
+                                                                        # interface
 
 interface_file = dmc.Prism('''
 """
@@ -1944,6 +1956,8 @@ if __name__ == "__main__":
     language="python",
     withLineNumbers=True,
 )
+
+                                                                        # app
 
 
 app_file = dmc.Prism('''
