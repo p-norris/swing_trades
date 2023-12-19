@@ -1,8 +1,8 @@
-# scan - 5
-# positions - 373
-# exits - 514
-# interface - 696
-# app - 1960
+# scan - 9
+# positions - 408
+# exits - 550
+# interface - 704
+# app - 1967
 
 import dash_mantine_components as dmc
 
@@ -41,7 +41,7 @@ net = 1.009
 # function to get stock data from yfinance
 def ticker_histories(tickers, history):
     df = yf.download(tickers, group_by="ticker", period=history)
-    dict = {idx: gp.xs(idx, level=1) for idx, gp in df.stack(level=0).groupby(level=1)}
+    dict = {idx: gp.xs(idx, level=0, axis=1) for idx, gp in df.groupby(level=0, axis=1)}
     return dict
 
 
@@ -49,9 +49,13 @@ def ticker_histories(tickers, history):
 def price_threshold(df):
     ave_price_1 = df['Close'].rolling(15).mean()
     ave_price_2 = df['Close'].rolling(100).mean()
+    df = df.assign(ave_price_1=ave_price_1)
+    df = df.assign(ave_price_2=ave_price_2)
+    p_1 = df['ave_price_1'].to_numpy()
+    p_2 = df['ave_price_2'].to_numpy()
 
-    ap_1 = ave_price_1.iloc[-1]
-    ap_2 = ave_price_2.iloc[-1]
+    ap_1 = p_1[-1]
+    ap_2 = p_2[-1]
 
     if (ap_1 >= 1) & (ap_2 >= 1):
         return True
@@ -61,14 +65,15 @@ def price_threshold(df):
 # does the stock meet the minimum volume requirement?
 def volume_threshold(df):
     Vol40 = df["Volume"].rolling(40).mean()
-    AV = Vol40.iloc[-1]
+    df = df.assign(Vol40=Vol40)
+    V = df["Vol40"].to_numpy()
+    AV = V[-1]
     if AV >= 350_000:
         return True
     return False
 
 
 # does the stock meet the minimum volatility requirement?
-# yfinance occasionally returns nan -- out of date issue
 def volatility_threshold(df):
     volati_list = df['Close'].tolist()
     try:
@@ -250,10 +255,40 @@ def safe_gain(df, px, nuro):
     return pxClose, nuro
 
 
-# determine the exit price
+# determine the exit price based on loss history
 def take_the_hit(pxClose, nuro, df):
-    hit_pct = -0.0225
-    take_hit = pxClose.iloc[-1] * (1 + hit_pct)
+    # loss on first day after close
+    df["loss_pct_1"] = np.where(
+        (df["Trigger"] == "Loss"), ((df["Max1"] - df["Close"]) / df["Close"]), 0
+    )
+
+    # loss on second day after close
+    df["loss_pct_2"] = np.where(
+        (df["Trigger"] == "Loss"), ((df["Max2"] - df["Close"]) / df["Close"]), 0
+    )
+
+    # occasionally, a stock will generate no losses
+    # so, to avoid dividing by zero:
+    l0 = list(filter(None, df["loss_pct_1"]))
+    l1 = list(filter(None, df["loss_pct_2"]))
+    l1 = [n for n in l1 if n < 0]
+    if l0 == 0:
+        return -1, -1, -1
+    if l1 == 0:
+        return -1, -1, -1
+
+    # get the mean for each day after close
+    loss_mean_1 = sum(l0) / len(l0)
+    loss_mean_2 = sum(l1) / len(l0)
+    hit_pct = ((loss_mean_1 + loss_mean_2) / 2) * 0.25  # percentage of the mean
+
+    # safe-guards
+    if hit_pct < -0.0225:
+        hit_pct = -0.0225
+    if np.isnan(hit_pct):
+        hit_pct = -0.0225  # in case of yfinance error
+
+    take_hit = pxClose.iloc[-1] * (1 + hit_pct)  # this is the losing exit price target
     nuro.append(take_hit)
     return nuro
 
@@ -370,8 +405,6 @@ print("\\n", time, "\\n", elapsed, "\\n")
     withLineNumbers=True,
 )
 
-                                                                        # positions
-
 positions_file = dmc.Prism('''
 """
     The positions.py file takes the scan.py information and
@@ -395,8 +428,11 @@ print("\\n", time1)
 df_positions = pd.read_csv("positions.csv")
 df_history = pd.read_csv("history.csv")
 
-# get the beginning balance from the trade history
+# get the beginning balance
 balance = df_history.iloc[0]["BALANCE"]
+if count < 3:
+    current_balance = df_positions["Cost"].sum()
+    balance = balance - current_balance
 
 # only take enough positions to have three
 # the count is how many to buy in this iteration
@@ -511,11 +547,9 @@ print("\\n", time, "\\n", elapsed, "\\n")
     withLineNumbers=True,
 )
 
-                                                                        # exits
-
 exits_file = dmc.Prism('''
 """
-    The exits.py file 'sells' the held position when an exit
+    The exits.py file sells the held position when an exit
     criteria is met. Stocks are always sold the day after
     purchase or the day after that. On the first of these
     two days, the exit trigger for a loss is suspended so that
@@ -544,18 +578,16 @@ if len(df_positions) == 0:
     exit("Got nothing to trade. Must be a bad market.")
 
 # establish necessary variables
-new_positions = df_scan['STOCK'].tolist()  # potential buys for go_for_a_run()
-
 positions = df_positions["STOCK"].tolist()  # list of stocks to sell
 
-timed_out = df_positions.iloc[0]["Sell On 2"]  # sell date when target isn't reached
+timed_out = df_positions.iloc[0]['Sell On 2']  # sell date when target isn't reached
 
 balance = df_history.iloc[0]["BALANCE"]  # get balance for updating sells
 
 sectors_dict = dict(zip(df_all_sectors.SYMBOL,  # create dict of sectors for dashboard
                         df_all_sectors.SECTOR))
 
-current_day = str(pd.Timestamp.now().date())  # current date for sells / trade history
+current_day = pd.Timestamp.now()  # current date for sells / trade history
 
 # loop through each of the stocks in the positions list
 # to determine trade and value, then record the exchange
@@ -564,24 +596,6 @@ current_day = str(pd.Timestamp.now().date())  # current date for sells / trade h
 # from a particular 'stock' from the positions list
 stock = 0
 for position in positions:
-
-    # if the new scan returns the same ticker
-    # that is already being held, keep it for
-    # another cycle
-    def go_for_a_run(position, new_positions, df_positions):
-        if position in new_positions:
-            date_1 = pd.to_datetime(df_positions['Sell On 1'])
-            date_2 = pd.to_datetime(df_positions['Sell On 2'])
-            expiration = pd.Timedelta(1, "D")
-            run_day_one = str(pd.to_datetime(date_1 + expiration).date())
-            run_day_two = str(pd.to_datetime(date_2 + expiration).date())
-            df_positions['Sell On 1'] = np.where(df_positions['STOCK'] == position,
-                                                 run_day_one, df_positions['Sell On 1'])
-            df_positions['Sell On 2'] = np.where(df_positions['STOCK'] == position,
-                                                 run_day_two, df_positions['Sell On 2'])
-            df_positions.to_csv("positions.csv", index=False)
-            return True
-
 
     # saves trade data in row format to add to history file
     def trade_record(sell_price, balance):
@@ -621,12 +635,6 @@ for position in positions:
         return df_history, df_positions
 
 
-    # has a position been listed as a buy for another day?
-    # if so, don't sell it and extent the sell dates
-    running = go_for_a_run(position, new_positions, df_positions)
-    if running:
-        continue
-
     # get trade history for one day per minute from yahoo!
     df = yf.download(position, period="1d", interval="1m")
 
@@ -661,7 +669,7 @@ for position in positions:
     # the 'stock' variable for the next position
     if (sold is False) & (current_day == timed_out):
         row = len(df)
-        sell_price = df.iloc[position]['Close']
+        sell_price = df.iloc[row]['Close']
         nuro, balance = trade_record(sell_price, balance)
         df_history, df_positions = update_datasets(nuro, df_history, df_positions)
         print('\nTimed Out\n')
@@ -692,8 +700,6 @@ print("\\n", time, "\\n", elapsed, "\\n")
     language="python",
     withLineNumbers=True,
 )
-
-                                                                        # interface
 
 interface_file = dmc.Prism('''
 """
@@ -749,14 +755,14 @@ elif num_positions == 1:
     displaying = "Currently/Recently Held Stocks: "
 elif num_positions == 0:
     df_tickers = df_history["STOCK"].head(3)
-    tickers = df_tickers.tolist()
+    tickers = df_tickers["STOCK"].tolist()
     displaying = "Recently Held Positions (stock tickers): "
 
 
 # function to get info from yahoo!
 def ticker_histories(tickers, history):
     df = yf.download(tickers, group_by="ticker", period=history, interval="1d")
-    dict = {idx: gp.xs(idx, level=1) for idx, gp in df.stack(level=0).groupby(level=1)}
+    dict = {idx: gp.xs(idx, level=0, axis=1) for idx, gp in df.groupby(level=0, axis=1)}
     return dict
 
 
@@ -1957,22 +1963,24 @@ if __name__ == "__main__":
     withLineNumbers=True,
 )
 
-                                                                        # app
-
 
 app_file = dmc.Prism('''
 """
-    This file automates the execution of the exits.py,
-    scan.py, and positions.py files on days when the 
-    markets are open, at the appropriate times.
+    This files automates the execution of the
+    exits.py, scan.py, and positions.py files
+    on days when the markets are open, at the
+    appropriate times.
 """
 
 import pandas as pd
 import pandas_market_calendars as mc
-
 import schedule
 import subprocess
 import time
+from github import Github
+
+print("\\n", "Starting the Schedule", "\\n")
+
 
 # main function from which other functions run
 # when time and date satisfy the 'schedule' mechanism,
@@ -2009,11 +2017,11 @@ def market_hours():
     print('\\n', open_time, '\\n')
 
     # save times as variables
-    opening_at = open_time.iloc[0][0]
-    run_the_exits = open_time.iloc[0][2]
-    run_the_scan = open_time.iloc[0][3]
-    run_the_positions = open_time.iloc[0][4]
-    run_the_interface = open_time.iloc[0][5]
+    opening_at = open_time.iloc[0, 0]
+    run_the_exits = open_time.iloc[0, 2]
+    run_the_scan = open_time.iloc[0, 3]
+    run_the_positions = open_time.iloc[0, 4]
+    update_the_files = open_time.iloc[0, 5]
 
     opening = pd.Timestamp(opening_at)
     todays_date = start_date.date()
@@ -2036,21 +2044,65 @@ def market_hours():
         subprocess.run(["python", "positions.py"])
         return schedule.CancelJob
 
+    # update github
+    def update_github():
+        g = Github('token goes here')
+        repo = g.get_user('p-norris').get_repo('swing_trades')
+
+        contents_h = repo.get_contents('src/history.csv')
+        contents_p = repo.get_contents('src/positions.csv')
+
+        his = 'C:/Users/phill/PycharmProjects/swing_trades/src/history.csv'
+        pos = 'C:/Users/phill/PycharmProjects/swing_trades/src/positions.csv'
+
+        with open(his, "r") as file:
+            new_h = file.read()
+        with open(pos, "r") as file:
+            new_p = file.read()
+
+        repo.update_file(contents_h.path, "updating file", new_h, contents_h.sha)
+        repo.update_file(contents_p.path, "updating file", new_p, contents_p.sha)
+
+        print('\\nGitHub has been updated.\\n')
+
+        return schedule.CancelJob
+
     # if the market is open, schedule runs all the files
     # positions runs 8 minutes after the scan which takes a while
-    # and the interface updates 1/10 of a minute later
+    # and the interface updates 1/6 of a minute later
     if trading_day:
-        schedule.every().day.at(run_the_exits).do(run_exits)
-        schedule.every().day.at(run_the_scan).do(run_scan)
-        schedule.every().day.at(run_the_positions).do(run_positions)
+        schedule.every().monday.at(run_the_exits).do(run_exits)
+        schedule.every().monday.at(run_the_scan).do(run_scan)
+        schedule.every().monday.at(run_the_positions).do(run_positions)
+        schedule.every().monday.at(update_the_files).do(update_github)
+
+        schedule.every().tuesday.at(run_the_exits).do(run_exits)
+        schedule.every().tuesday.at(run_the_scan).do(run_scan)
+        schedule.every().tuesday.at(run_the_positions).do(run_positions)
+        schedule.every().tuesday.at(update_the_files).do(update_github)
+
+        schedule.every().wednesday.at(run_the_exits).do(run_exits)
+        schedule.every().wednesday.at(run_the_scan).do(run_scan)
+        schedule.every().wednesday.at(run_the_positions).do(run_positions)
+        schedule.every().wednesday.at(update_the_files).do(update_github)
+
+        schedule.every().thursday.at(run_the_exits).do(run_exits)
+        schedule.every().thursday.at(run_the_scan).do(run_scan)
+        schedule.every().thursday.at(run_the_positions).do(run_positions)
+        schedule.every().thursday.at(update_the_files).do(update_github)
+
+        schedule.every().friday.at(run_the_exits).do(run_exits)
+        schedule.every().friday.at(run_the_scan).do(run_scan)
+        schedule.every().friday.at(run_the_positions).do(run_positions)
+        schedule.every().friday.at(update_the_files).do(update_github)
 
 
 # master schedule that starts the process
-schedule.every().monday.at("09:15").do(market_hours)
-schedule.every().tuesday.at("09:15").do(market_hours)
-schedule.every().wednesday.at("09:15").do(market_hours)
-schedule.every().thursday.at("09:15").do(market_hours)
-schedule.every().friday.at("09:15").do(market_hours)
+schedule.every().monday.at("12:30").do(market_hours)
+schedule.every().tuesday.at("12:30").do(market_hours)
+schedule.every().wednesday.at("12:30").do(market_hours)
+schedule.every().thursday.at("12:30").do(market_hours)
+schedule.every().friday.at("12:30").do(market_hours)
 
 while True:
     schedule.run_pending()
