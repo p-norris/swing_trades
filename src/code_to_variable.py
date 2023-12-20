@@ -1,6 +1,6 @@
 # scan - 9
-# positions - 408
-# exits - 550
+# positions - 407
+# exits - 549
 # interface - 704
 # app - 1967
 
@@ -247,8 +247,7 @@ def safe_gain(df, px, nuro):
     # greater than the close - a portion of the target list's range
     # provides a historically safe exit point
     if len(target) > 5:
-        sell_inc = target[0] + ((target[-1] - target[0]) * .275)  # percentage of the range
-        sell_price = pxClose.iloc[-1] * (1 + sell_inc)
+        sell_price = pxClose.iloc[-1] * (1 + np.quantile(target, 0.35))
     else:
         sell_price = pxClose.iloc[-1] * (net - 0.002)  # in case test period changes
     nuro.append(sell_price)
@@ -580,8 +579,6 @@ if len(df_positions) == 0:
 # establish necessary variables
 positions = df_positions["STOCK"].tolist()  # list of stocks to sell
 
-timed_out = df_positions.iloc[0]['Sell On 2']  # sell date when target isn't reached
-
 balance = df_history.iloc[0]["BALANCE"]  # get balance for updating sells
 
 sectors_dict = dict(zip(df_all_sectors.SYMBOL,  # create dict of sectors for dashboard
@@ -596,6 +593,9 @@ current_day = pd.Timestamp.now()  # current date for sells / trade history
 # from a particular 'stock' from the positions list
 stock = 0
 for position in positions:
+
+    # get the date that the stock must be sold on
+    timed_out = df_positions.iloc[stock]["Sell On 2"]  # sell date when target isn't reached
 
     # saves trade data in row format to add to history file
     def trade_record(sell_price, balance):
