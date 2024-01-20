@@ -114,7 +114,7 @@ else:
 number_card = dbc.Card(
     dbc.CardBody(
         [
-            html.H4(f"{num_trades} Trades"),
+            html.H4(f"{num_trades} Trades", className='mt-3'),
             html.P(f"since 8/24/2023")
         ],
         className="border-start border-info border-5",
