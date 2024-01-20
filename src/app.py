@@ -771,7 +771,12 @@ app.layout = dbc.Container(
                         dbc.Col(fail_card),
                         dbc.Col(balance_card),
                     ],
-                    width=2,
+                    xs=12,
+                    sm=12,
+                    md=2,
+                    lg=2,
+                    xl=2,
+                    xxl=2,
                 ),
                 ## R4 - Second Column - two figures
                 dbc.Col(
