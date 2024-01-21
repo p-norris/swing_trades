@@ -1966,7 +1966,7 @@ if __name__ == "__main__":
 
 app_file = dmc.Prism('''
 """
-    This files automates the execution of the
+    This file automates the execution of the
     exits.py, scan.py, and positions.py files
     on days when the markets are open, at the
     appropriate times.
