@@ -1,8 +1,8 @@
 # scan - 9
 # positions - 407
 # exits - 549
-# interface - 748
-# app - 2010
+# interface - 741
+# app - 2003
 
 import dash_mantine_components as dmc
 
@@ -662,13 +662,6 @@ for position in positions:
         nuro.clear()
         return df_history, df_positions
 
-
-    
-    # has a position been listed as a buy for another day?
-    # if so, don't sell it and extent the sell dates
-    running = go_for_a_run(position, new_positions, df_positions)
-    if running:
-        continue
     
     # get trade history for one day per minute from yahoo!
     df = yf.download(position, period="1d", interval="1m")
