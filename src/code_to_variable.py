@@ -1,8 +1,8 @@
 # scan - 9
 # positions - 407
 # exits - 549
-# interface - 704
-# app - 1967
+# interface - 748
+# app - 2010
 
 import dash_mantine_components as dmc
 
@@ -16,7 +16,7 @@ scan_file = dmc.Prism('''
     saved for the positions.py file to use in 'implementing' the 
     trades.
 """
-    
+
 import pandas as pd
 import numpy as np
 import yfinance as yf
@@ -400,9 +400,9 @@ elapsed = time - time1
 print("\\n", time, "\\n", elapsed, "\\n")
 
 ''',
-    language="python",
-    withLineNumbers=True,
-)
+                      language="python",
+                      withLineNumbers=True,
+                      )
 
 positions_file = dmc.Prism('''
 """
@@ -542,9 +542,9 @@ time = time.floor(freq="S")
 elapsed = time - time1
 print("\\n", time, "\\n", elapsed, "\\n")
 ''',
-    language="python",
-    withLineNumbers=True,
-)
+                           language="python",
+                           withLineNumbers=True,
+                           )
 
 exits_file = dmc.Prism('''
 """
@@ -560,23 +560,31 @@ exits_file = dmc.Prism('''
 """
 
 import pandas as pd
+import numpy as np
 import yfinance as yf
 
 # for terminal, signal beginning of script with time
 print("\\n", "Exits", "\\n")
 time1 = pd.Timestamp.now()
 time1 = time1.floor(freq="S")
-print(time1, '\\n')
+print(time1, "\\n")
 
 # read in the relevant datasets
 df_positions = pd.read_csv("positions.csv")
-df_history = pd.read_csv("history.csv")
-df_all_sectors = pd.read_csv('tickers_sectors_6000.csv')
+print('\\n', df_positions, '\\n')
+
 
 if len(df_positions) == 0:
     exit("Got nothing to trade. Must be a bad market.")
 
+df_history = pd.read_csv("history.csv")
+df_scan = pd.read_csv("scan.csv", nrows=3)
+df_all_sectors = pd.read_csv('tickers_sectors_6000.csv')
+market_dates = pd.read_csv('hours.csv')
+
 # establish necessary variables
+new_positions = df_scan['STOCK'].tolist()  # potential buys for go_for_a_run()
+
 positions = df_positions["STOCK"].tolist()  # list of stocks to sell
 
 balance = df_history.iloc[0]["BALANCE"]  # get balance for updating sells
@@ -584,7 +592,7 @@ balance = df_history.iloc[0]["BALANCE"]  # get balance for updating sells
 sectors_dict = dict(zip(df_all_sectors.SYMBOL,  # create dict of sectors for dashboard
                         df_all_sectors.SECTOR))
 
-current_day = pd.Timestamp.now()  # current date for sells / trade history
+current_day = str(pd.Timestamp.now().date())  # current date for sells / trade history
 
 # loop through each of the stocks in the positions list
 # to determine trade and value, then record the exchange
@@ -593,14 +601,34 @@ current_day = pd.Timestamp.now()  # current date for sells / trade history
 # from a particular 'stock' from the positions list
 stock = 0
 for position in positions:
-
+    print('\\nSTOCK:', stock, '\\n')
     # get the date that the stock must be sold on
-    timed_out = df_positions.iloc[stock]["Sell On 2"]  # sell date when target isn't reached
+    timed_out = df_positions.loc[stock, "Sell On 2"]  # sell date when target isn't reached
+    print('HERE:', position, 'at', timed_out)
+
+    # if the new scan returns the same ticker
+    # that is already being held, keep it for
+    # another cycle
+    def go_for_a_run(position, new_positions, df_positions):
+        if position in new_positions:
+            market_dates_1 = market_dates.loc[1, 'market_open']
+            market_dates_1 = str(pd.to_datetime(market_dates_1).date())
+            market_dates_2 = market_dates.loc[2, 'market_open']
+            market_dates_2 = str(pd.to_datetime(market_dates_2).date())
+            df_positions['Sell On 1'] = np.where(df_positions['STOCK'] == position,
+                                                 market_dates_1, df_positions['Sell On 1'])
+            df_positions['Sell On 2'] = np.where(df_positions['STOCK'] == position,
+                                                 market_dates_2, df_positions['Sell On 2'])
+            df_positions.to_csv("positions.csv", index=False)
+            return True
+        else:
+            return False
+
 
     # saves trade data in row format to add to history file
     def trade_record(sell_price, balance):
         buy_date = df_positions.iloc[stock]["Buy Date"]
-        sell_date = pd.Timestamp.now()
+        sell_date = str(pd.Timestamp.now().date())
         share_price = df_positions.iloc[stock]["Share Price"].round(2)
         shares = df_positions.iloc[stock]["Shares"]
         cost = df_positions.iloc[stock]["Cost"].round(2)
@@ -635,6 +663,13 @@ for position in positions:
         return df_history, df_positions
 
 
+    
+    # has a position been listed as a buy for another day?
+    # if so, don't sell it and extent the sell dates
+    running = go_for_a_run(position, new_positions, df_positions)
+    if running:
+        continue
+    
     # get trade history for one day per minute from yahoo!
     df = yf.download(position, period="1d", interval="1m")
 
@@ -653,16 +688,25 @@ for position in positions:
             nuro, balance = trade_record(sell_price, balance)
             df_history, df_positions = update_datasets(nuro, df_history, df_positions)
             sold = True
-            print('\nSold High\n')
+            print('\\nSold High\\n')
             break
-        elif (current_day == timed_out) & (i > 33):  # updated to better reflect strategy on 23 Oct 2
+        elif (current_day == timed_out) & (i > 60):  # updated to better reflect strategy on 23 Oct 2
             if df.iloc[i]["Close"] <= low_price:
                 sell_price = df.iloc[i]["Close"]
                 nuro, balance = trade_record(sell_price, balance)
                 df_history, df_positions = update_datasets(nuro, df_history, df_positions)
                 sold = True
-                print('\nSold Low\n')
+                print('\\nSold Low\\n')
                 break
+
+    # has a position been listed as a buy for another day?
+    # if so, don't sell it and extent the sell dates
+    if sold is False:
+        running = go_for_a_run(position, new_positions, df_positions)
+        if running:
+            print(position, 'is running.')
+            stock += 1
+            continue
 
     # if position does not meet either trade criteria,
     # sell it at the end of the second day, then update
@@ -672,9 +716,9 @@ for position in positions:
         sell_price = df.iloc[row]['Close']
         nuro, balance = trade_record(sell_price, balance)
         df_history, df_positions = update_datasets(nuro, df_history, df_positions)
-        print('\nTimed Out\n')
+        print('\\nTimed Out\\n')
     elif (sold is False) & (current_day != timed_out):
-        print('\nNEXT\n')
+        print('\\nNEXT\\n')
         stock += 1
 
 # normalize the dates so that they are properly formatted for future use
@@ -697,9 +741,9 @@ elapsed = time - time1
 print("\\n", time, "\\n", elapsed, "\\n")
 
 ''',
-    language="python",
-    withLineNumbers=True,
-)
+                       language="python",
+                       withLineNumbers=True,
+                       )
 
 interface_file = dmc.Prism('''
 """
@@ -1959,14 +2003,13 @@ if __name__ == "__main__":
     app.run_server(debug=False)
 
 ''',
-    language="python",
-    withLineNumbers=True,
-)
-
+                           language="python",
+                           withLineNumbers=True,
+                           )
 
 app_file = dmc.Prism('''
 """
-    This file automates the execution of the
+    This files automates the execution of the
     exits.py, scan.py, and positions.py files
     on days when the markets are open, at the
     appropriate times.
@@ -2109,6 +2152,6 @@ while True:
     time.sleep(1)
 
 ''',
-    language="python",
-    withLineNumbers=True,
-)
+                     language="python",
+                     withLineNumbers=True,
+                     )
