@@ -1,6 +1,7 @@
 SYMBOL,SECTOR
 A,Healthcare
 AA,Basic Materials
+AADI,Healthcare
 AAL,Industrials
 AAOI,Technology
 AAON,Industrials
@@ -19,7 +20,6 @@ ABR,Real Estate
 ABSI,Healthcare
 ABT,Healthcare
 ABUS,Healthcare
-ABVC,Healthcare
 ACAD,Healthcare
 ACB,Healthcare
 ACCD,Healthcare
@@ -40,6 +40,7 @@ ACN,Technology
 ACON,Healthcare
 ACRE,Real Estate
 ACRS,Healthcare
+ACT,Financial Services
 ACVA,Consumer Cyclical
 ADBE,Technology
 ADC,Real Estate
@@ -55,7 +56,6 @@ ADPT,Healthcare
 ADSK,Technology
 ADT,Industrials
 ADTN,Technology
-ADTX,Healthcare
 ADV,Communication Services
 ADVM,Healthcare
 AEE,Utilities
@@ -79,7 +79,6 @@ AGL,Healthcare
 AGNC,Real Estate
 AGR,Utilities
 AGRO,Consumer Defensive
-AGRX,Healthcare
 AGTI,Healthcare
 AHCO,Healthcare
 AHH,Real Estate
@@ -87,7 +86,6 @@ AHT,Real Estate
 AI,Technology
 AIG,Financial Services
 AIRC,Real Estate
-AISP,Technology
 AIV,Real Estate
 AIZ,Financial Services
 AJG,Financial Services
@@ -119,6 +117,7 @@ ALTM,Basic Materials
 ALTO,Basic Materials
 ALTR,Technology
 ALV,Consumer Cyclical
+ALVO,Healthcare
 AM,Energy
 AMAM,Healthcare
 AMAT,Technology
@@ -163,6 +162,7 @@ APA,Energy
 APAM,Financial Services
 APD,Basic Materials
 APG,Industrials
+APGE,Healthcare
 APH,Technology
 APLD,Financial Services
 APLE,Real Estate
@@ -211,7 +211,6 @@ ASO,Consumer Cyclical
 ASPI,Basic Materials
 ASPN,Industrials
 ASTL,Basic Materials
-ASTR,Industrials
 ASTS,Technology
 ASX,Technology
 ATAI,Healthcare
@@ -219,7 +218,6 @@ ATAT,Consumer Cyclical
 ATEC,Healthcare
 ATEN,Technology
 ATGE,Consumer Defensive
-ATHA,Healthcare
 ATHM,Communication Services
 ATI,Industrials
 ATKR,Industrials
@@ -248,11 +246,13 @@ AVT,Technology
 AVTR,Basic Materials
 AVXL,Healthcare
 AVY,Consumer Cyclical
+AWI,Industrials
 AWK,Utilities
 AX,Financial Services
 AXGN,Healthcare
 AXL,Consumer Cyclical
 AXNX,Healthcare
+AXON,Industrials
 AXP,Financial Services
 AXS,Financial Services
 AXSM,Healthcare
@@ -264,15 +264,16 @@ AZEK,Industrials
 AZN,Healthcare
 AZTA,Healthcare
 AZUL,Industrials
-B,Industrials
 BA,Industrials
 BABA,Consumer Cyclical
 BAC,Financial Services
 BAH,Industrials
 BAK,Basic Materials
 BALL,Consumer Cyclical
+BALY,Consumer Cyclical
 BAM,Financial Services
 BANC,Financial Services
+BAND,Technology
 BASE,Technology
 BAX,Healthcare
 BB,Technology
@@ -289,6 +290,8 @@ BCAB,Healthcare
 BCE,Communication Services
 BCRX,Healthcare
 BCS,Financial Services
+BCX,Financial Services
+BCYC,Healthcare
 BDJ,Financial Services
 BDN,Real Estate
 BDRX,Healthcare
@@ -321,16 +324,17 @@ BIGZ,Financial Services
 BIIB,Healthcare
 BILI,Communication Services
 BILL,Technology
+BIOR,Healthcare
 BIP,Utilities
 BIPC,Utilities
 BITF,Financial Services
+BIVI,Healthcare
 BJ,Consumer Defensive
 BJRI,Consumer Cyclical
 BK,Financial Services
 BKD,Healthcare
 BKE,Consumer Cyclical
 BKH,Utilities
-BKKT,Technology
 BKR,Energy
 BKSY,Technology
 BKU,Financial Services
@@ -347,6 +351,7 @@ BLND,Technology
 BLNK,Industrials
 BLUE,Healthcare
 BLZE,Technology
+BMA,Financial Services
 BMBL,Technology
 BMEA,Healthcare
 BMEZ,ERROR
@@ -359,7 +364,6 @@ BNGO,Healthcare
 BNL,Real Estate
 BNS,Financial Services
 BNTX,Healthcare
-BNZI,Technology
 BOH,Financial Services
 BOOT,Consumer Cyclical
 BORR,Energy
@@ -458,6 +462,7 @@ CE,Basic Materials
 CEG,Utilities
 CEIX,Energy
 CELH,Consumer Defensive
+CELU,Healthcare
 CENX,Basic Materials
 CERE,Healthcare
 CERS,Healthcare
@@ -537,6 +542,7 @@ CNTA,Healthcare
 CNVS,Communication Services
 CNX,Energy
 CNXC,Technology
+COCH,Healthcare
 COCO,Consumer Defensive
 COF,Financial Services
 COGT,Healthcare
@@ -571,6 +577,8 @@ CRBP,Healthcare
 CRBU,Healthcare
 CRC,Energy
 CRCT,Technology
+CRDF,Healthcare
+CRDL,Healthcare
 CRDO,Technology
 CRF,Financial Services
 CRGY,Energy
@@ -603,7 +611,6 @@ CTOS,Industrials
 CTRA,Energy
 CTRE,Real Estate
 CTSH,Technology
-CTSO,Healthcare
 CTVA,Basic Materials
 CUBE,Real Estate
 CUK,Consumer Cyclical
@@ -638,6 +645,7 @@ DAN,Consumer Cyclical
 DAR,Consumer Defensive
 DASH,Communication Services
 DATS,Technology
+DAVA,Technology
 DAWN,Healthcare
 DAY,Technology
 DB,Financial Services
@@ -650,6 +658,7 @@ DCI,Industrials
 DCPH,Healthcare
 DD,Basic Materials
 DDD,Technology
+DDL,Consumer Defensive
 DDOG,Technology
 DE,Industrials
 DEA,Real Estate
@@ -657,6 +666,7 @@ DEI,Real Estate
 DELL,Technology
 DENN,Consumer Cyclical
 DEO,Consumer Defensive
+DFH,Consumer Cyclical
 DFS,Financial Services
 DG,Consumer Defensive
 DGX,Healthcare
@@ -680,12 +690,12 @@ DLTR,Consumer Defensive
 DNA,Healthcare
 DNB,Financial Services
 DNLI,Healthcare
+DNMR,Basic Materials
 DNN,Energy
 DNOW,Industrials
 DNP,Financial Services
 DNUT,Consumer Defensive
 DO,Energy
-DOC,Real Estate
 DOCN,Technology
 DOCS,Healthcare
 DOCU,Technology
@@ -759,6 +769,7 @@ ELP,Utilities
 ELS,Real Estate
 ELV,Healthcare
 EMBC,Healthcare
+EME,Industrials
 EMN,Basic Materials
 EMR,Industrials
 ENB,Energy
@@ -767,13 +778,11 @@ ENLC,Energy
 ENOV,Industrials
 ENPH,Technology
 ENR,Industrials
-ENSC,Healthcare
 ENTG,Technology
 ENV,Technology
 ENVX,Industrials
 EOG,Energy
 EOLS,Healthcare
-EOSE,Industrials
 EPAM,Technology
 EPC,Consumer Defensive
 EPD,Energy
@@ -816,7 +825,6 @@ EVH,Healthcare
 EVLV,Industrials
 EVRG,Utilities
 EVRI,Consumer Cyclical
-EVV,Financial Services
 EW,Healthcare
 EWBC,Financial Services
 EWCZ,Consumer Defensive
@@ -902,6 +910,7 @@ FOUR,Technology
 FOX,Communication Services
 FOXA,Communication Services
 FOXF,Consumer Cyclical
+FPI,Real Estate
 FR,Real Estate
 FREE,Consumer Defensive
 FREY,Industrials
@@ -911,7 +920,6 @@ FRO,Energy
 FROG,Technology
 FRPT,Consumer Defensive
 FRSH,Technology
-FRSX,Consumer Cyclical
 FRT,Real Estate
 FSCO,Financial Services
 FSK,Financial Services
@@ -932,7 +940,6 @@ FULT,Financial Services
 FUSN,Healthcare
 FUTU,Financial Services
 FVRR,Communication Services
-FWBI,Healthcare
 FWONK,Communication Services
 FWRD,Industrials
 FYBR,Communication Services
@@ -954,6 +961,7 @@ GENI,Communication Services
 GEO,Industrials
 GERN,Healthcare
 GES,Consumer Cyclical
+GFAI,Industrials
 GFF,Industrials
 GFI,Basic Materials
 GFL,Industrials
@@ -976,7 +984,6 @@ GLOB,Technology
 GLPI,Real Estate
 GLT,Basic Materials
 GLW,Technology
-GLYC,Healthcare
 GM,Consumer Cyclical
 GMAB,Healthcare
 GME,Consumer Cyclical
@@ -1006,9 +1013,7 @@ GPS,Consumer Cyclical
 GRAB,Technology
 GREE,Financial Services
 GRFS,Healthcare
-GRI,Healthcare
 GRMN,Technology
-GRND,Technology
 GRNT,Energy
 GROY,Basic Materials
 GRPN,Communication Services
@@ -1017,6 +1022,7 @@ GRWG,Consumer Cyclical
 GS,Financial Services
 GSAT,Communication Services
 GSBD,Financial Services
+GSIT,Technology
 GSK,Healthcare
 GSL,Industrials
 GSM,Basic Materials
@@ -1053,6 +1059,7 @@ HD,Consumer Cyclical
 HDB,Financial Services
 HDSN,Basic Materials
 HE,Utilities
+HEI,Industrials
 HEPS,Consumer Cyclical
 HES,Energy
 HESM,Energy
@@ -1068,7 +1075,6 @@ HKD,Technology
 HKIT,Technology
 HL,Basic Materials
 HLF,Consumer Defensive
-HLI,Financial Services
 HLIT,Technology
 HLMN,Industrials
 HLN,Healthcare
@@ -1090,18 +1096,17 @@ HOPE,Financial Services
 HOUS,Real Estate
 HP,Energy
 HPE,Technology
-HPK,Energy
 HPP,Real Estate
 HPQ,Technology
 HQY,Healthcare
 HR,Real Estate
 HRB,Consumer Cyclical
 HRL,Consumer Defensive
-HROW,Healthcare
 HRT,Industrials
 HRTX,Healthcare
 HSAI,Consumer Cyclical
 HSBC,Financial Services
+HSDT,Healthcare
 HSIC,Healthcare
 HST,Real Estate
 HSY,Consumer Defensive
@@ -1207,15 +1212,18 @@ IRWD,Healthcare
 ISRG,Healthcare
 IT,Technology
 ITCI,Healthcare
+ITRI,Technology
 ITRM,Healthcare
 ITUB,Financial Services
 ITW,Industrials
 IVR,Real Estate
 IVVD,Healthcare
 IVZ,Financial Services
+IXHL,Healthcare
 J,Industrials
 JACK,Consumer Cyclical
 JAMF,Technology
+JANX,Healthcare
 JAZZ,Healthcare
 JBGS,Real Estate
 JBHT,Industrials
@@ -1265,10 +1273,12 @@ KLIC,Technology
 KMB,Consumer Defensive
 KMI,Energy
 KMPR,Financial Services
+KMT,Industrials
 KMX,Consumer Cyclical
 KN,Technology
 KNF,Basic Materials
 KNSA,Healthcare
+KNTK,Energy
 KNX,Industrials
 KO,Consumer Defensive
 KOD,Healthcare
@@ -1284,6 +1294,7 @@ KRNY,Financial Services
 KROS,Healthcare
 KRP,Energy
 KRTX,Healthcare
+KRYS,Healthcare
 KSS,Consumer Cyclical
 KT,Communication Services
 KTB,Consumer Cyclical
@@ -1297,6 +1308,7 @@ KYN,Financial Services
 L,Financial Services
 LAAC,Basic Materials
 LAB,Healthcare
+LAC,Basic Materials
 LADR,Real Estate
 LAES,Technology
 LAMR,Real Estate
@@ -1318,6 +1330,7 @@ LEG,Consumer Cyclical
 LEGN,Healthcare
 LEN,Consumer Cyclical
 LESL,Consumer Cyclical
+LEV,Industrials
 LEVI,Consumer Cyclical
 LFMD,Healthcare
 LFST,Healthcare
@@ -1352,6 +1365,7 @@ LPX,Industrials
 LQDA,Healthcare
 LQR,Consumer Defensive
 LRCX,Technology
+LRHC,Real Estate
 LRMR,Healthcare
 LRN,Consumer Defensive
 LSCC,Technology
@@ -1388,6 +1402,7 @@ MAG,Basic Materials
 MAIA,Healthcare
 MAIN,Financial Services
 MAN,Industrials
+MANH,Technology
 MANU,Communication Services
 MAR,Consumer Cyclical
 MARA,Financial Services
@@ -1399,7 +1414,6 @@ MAXN,Technology
 MBC,Consumer Cyclical
 MBI,Financial Services
 MBLY,Consumer Cyclical
-MBOT,Healthcare
 MC,Financial Services
 MCD,Consumer Cyclical
 MCHP,Technology
@@ -1414,7 +1428,6 @@ MDB,Technology
 MDC,Consumer Cyclical
 MDGL,Healthcare
 MDLZ,Consumer Defensive
-MDRX,Healthcare
 MDT,Healthcare
 MDU,Industrials
 MDXG,Healthcare
@@ -1433,10 +1446,12 @@ MGNX,Healthcare
 MGRC,Industrials
 MGY,Energy
 MHK,Consumer Cyclical
+MIDD,Industrials
 MIGI,Financial Services
 MINM,Technology
 MIR,Industrials
 MIRM,Healthcare
+MIST,Healthcare
 MITK,Technology
 MKC,Consumer Defensive
 MKSI,Technology
@@ -1445,6 +1460,7 @@ MLCO,Consumer Cyclical
 MLEC,Healthcare
 MLI,Industrials
 MLKN,Consumer Cyclical
+MLM,Basic Materials
 MLTX,Healthcare
 MMC,Financial Services
 MMM,Industrials
@@ -1512,6 +1528,7 @@ MUR,Energy
 MUX,Basic Materials
 MVIS,Technology
 MWA,Industrials
+MX,Technology
 MXCT,Healthcare
 MXL,Technology
 MYGN,Healthcare
@@ -1525,8 +1542,8 @@ NAT,Industrials
 NAVI,Financial Services
 NBIX,Healthcare
 NCLH,Consumer Cyclical
-NCMI,Communication Services
 NCNO,Technology
+NCV,Financial Services
 NCZ,Financial Services
 NDAQ,Financial Services
 NE,Energy
@@ -1558,7 +1575,6 @@ NLY,Real Estate
 NMIH,Financial Services
 NMR,Financial Services
 NMRK,Real Estate
-NMZ,Financial Services
 NN,Technology
 NNDM,Technology
 NNN,Real Estate
@@ -1568,6 +1584,7 @@ NOG,Energy
 NOK,Technology
 NOMD,Consumer Defensive
 NOTE,Technology
+NOTV,Healthcare
 NOV,Energy
 NOVA,Technology
 NOW,Technology
@@ -1591,6 +1608,7 @@ NTRS,Financial Services
 NTST,Real Estate
 NU,Financial Services
 NUE,Basic Materials
+NUKK,Technology
 NUS,Consumer Defensive
 NUV,Financial Services
 NUVB,Healthcare
@@ -1598,7 +1616,6 @@ NVAX,Healthcare
 NVCR,Healthcare
 NVDA,Technology
 NVEI,Technology
-NVFY,Consumer Cyclical
 NVG,Financial Services
 NVNI,Technology
 NVO,Healthcare
@@ -1626,6 +1643,7 @@ O,Real Estate
 OABI,Healthcare
 OBDC,Financial Services
 OC,Industrials
+OCEA,Healthcare
 OCSL,Financial Services
 OCUL,Healthcare
 ODD,Technology
@@ -1754,9 +1772,9 @@ PHIN,Consumer Cyclical
 PHK,Financial Services
 PHM,Consumer Cyclical
 PHR,Healthcare
+PHUN,Technology
 PI,Technology
 PII,Consumer Cyclical
-PIII,Healthcare
 PINC,Healthcare
 PINS,Communication Services
 PK,Real Estate
@@ -1783,7 +1801,6 @@ PNNT,Financial Services
 PNR,Industrials
 PNW,Utilities
 PODD,Healthcare
-POL,Consumer Cyclical
 POR,Utilities
 POST,Consumer Defensive
 POWI,Technology
@@ -1832,6 +1849,7 @@ PTON,Consumer Cyclical
 PTPI,Healthcare
 PTVE,Consumer Cyclical
 PTY,Financial Services
+PUBM,Technology
 PUK,Financial Services
 PUMP,Energy
 PVH,Consumer Cyclical
@@ -1844,12 +1862,14 @@ PYCR,Technology
 PYPL,Financial Services
 PYXS,Healthcare
 PZZA,Consumer Cyclical
+QBTS,Technology
 QCOM,Technology
 QD,Financial Services
 QDEL,Healthcare
 QFIN,Financial Services
 QGEN,Healthcare
 QLYS,Technology
+QNRX,Healthcare
 QNST,Communication Services
 QRVO,Technology
 QS,Consumer Cyclical
@@ -1872,6 +1892,7 @@ RCM,Healthcare
 RCUS,Healthcare
 RDFN,Real Estate
 RDN,Financial Services
+RDNT,Healthcare
 REAL,Consumer Cyclical
 REAX,Real Estate
 REG,Real Estate
@@ -1923,7 +1944,6 @@ ROL,Consumer Cyclical
 ROOT,Financial Services
 ROP,Technology
 ROST,Consumer Cyclical
-ROVR,Communication Services
 RPAY,Technology
 RPD,Technology
 RPHM,Healthcare
@@ -1957,7 +1977,6 @@ RYAM,Basic Materials
 RYAN,Financial Services
 RYN,Real Estate
 RYTM,Healthcare
-RYZB,Healthcare
 S,Technology
 SA,Basic Materials
 SABR,Consumer Cyclical
@@ -1967,7 +1986,6 @@ SANA,Healthcare
 SAND,Basic Materials
 SANM,Technology
 SAP,Technology
-SASI,Technology
 SATS,Technology
 SAVA,Healthcare
 SAVE,Industrials
@@ -2012,7 +2030,6 @@ SFNC,Financial Services
 SFWL,Industrials
 SG,Consumer Cyclical
 SGH,Technology
-SGHT,Healthcare
 SGML,Basic Materials
 SGMT,Healthcare
 SGRY,Healthcare
@@ -2040,9 +2057,9 @@ SIX,Consumer Cyclical
 SJM,Consumer Defensive
 SJT,Energy
 SKIN,Consumer Defensive
-SKM,Communication Services
 SKT,Real Estate
 SKX,Consumer Cyclical
+SKYT,Technology
 SKYW,Industrials
 SLB,Energy
 SLCA,Energy
@@ -2072,7 +2089,6 @@ SNCY,Industrials
 SNDL,Consumer Defensive
 SNDR,Industrials
 SNDX,Healthcare
-SNES,Basic Materials
 SNN,Healthcare
 SNOW,Technology
 SNPS,Technology
@@ -2112,6 +2128,7 @@ SQSP,Technology
 SR,Utilities
 SRCL,Industrials
 SRE,Utilities
+SRFM,Industrials
 SRPT,Healthcare
 SRRK,Healthcare
 SSB,Financial Services
@@ -2126,6 +2143,8 @@ STAA,Healthcare
 STAG,Real Estate
 STE,Healthcare
 STEM,Technology
+STEP,Financial Services
+STER,Technology
 STGW,Communication Services
 STKL,Consumer Defensive
 STLA,Consumer Cyclical
@@ -2165,6 +2184,7 @@ SYF,Financial Services
 SYK,Healthcare
 SYM,Industrials
 SYRA,Healthcare
+SYRE,Healthcare
 SYY,Consumer Defensive
 T,Communication Services
 TAC,Utilities
@@ -2181,7 +2201,6 @@ TBLA,Communication Services
 TBPH,Healthcare
 TCBI,Financial Services
 TCBP,Healthcare
-TCJH,Financial Services
 TCN,Real Estate
 TCOM,Consumer Cyclical
 TCS,Consumer Cyclical
@@ -2243,6 +2262,7 @@ TPIC,Industrials
 TPR,Consumer Cyclical
 TPST,Healthcare
 TPX,Consumer Cyclical
+TREE,Financial Services
 TREX,Industrials
 TRGP,Energy
 TRIN,Financial Services
@@ -2260,10 +2280,10 @@ TRUP,Financial Services
 TRV,Financial Services
 TS,Energy
 TSCO,Consumer Cyclical
-TSE,Basic Materials
 TSEM,Technology
 TSHA,Healthcare
 TSLA,Consumer Cyclical
+TSLX,Financial Services
 TSM,Technology
 TSN,Consumer Defensive
 TSVT,Healthcare
@@ -2273,7 +2293,6 @@ TTD,Technology
 TTE,Energy
 TTI,Energy
 TTMI,Technology
-TTOO,Healthcare
 TTWO,Communication Services
 TU,Communication Services
 TUP,Consumer Cyclical
@@ -2297,6 +2316,7 @@ UBER,Technology
 UBS,Financial Services
 UBSI,Financial Services
 UCBI,Financial Services
+UCTT,Technology
 UDMY,Consumer Defensive
 UDR,Real Estate
 UE,Real Estate
@@ -2309,13 +2329,13 @@ UL,Consumer Defensive
 ULCC,Industrials
 ULTA,Consumer Cyclical
 UMC,Technology
+UMH,Real Estate
 UNFI,Consumer Defensive
 UNH,Healthcare
 UNIT,Real Estate
 UNM,Financial Services
 UNP,Industrials
 UP,Industrials
-UPBD,Technology
 UPS,Industrials
 UPST,Financial Services
 UPWK,Industrials
@@ -2327,6 +2347,7 @@ USA,Financial Services
 USAC,Energy
 USB,Financial Services
 USFD,Consumer Defensive
+UTHR,Healthcare
 UTI,Consumer Defensive
 UTZ,Consumer Defensive
 UUUU,Energy
@@ -2335,6 +2356,7 @@ V,Financial Services
 VAC,Consumer Cyclical
 VAL,Energy
 VALE,Basic Materials
+VANI,Healthcare
 VBTX,Financial Services
 VCEL,Healthcare
 VCIG,Industrials
@@ -2362,6 +2384,7 @@ VKTX,Healthcare
 VLCN,Consumer Cyclical
 VLO,Energy
 VLRS,Industrials
+VLTO,Industrials
 VLY,Financial Services
 VMC,Basic Materials
 VMEO,Technology
@@ -2470,7 +2493,6 @@ WWW,Consumer Cyclical
 WY,Real Estate
 WYNN,Consumer Cyclical
 X,Basic Materials
-XAIR,Healthcare
 XEL,Utilities
 XENE,Healthcare
 XERS,Healthcare
@@ -2507,6 +2529,7 @@ ZG,Communication Services
 ZGN,Consumer Cyclical
 ZI,Technology
 ZIM,Industrials
+ZIMV,Healthcare
 ZION,Financial Services
 ZIP,Industrials
 ZJYL,Healthcare
