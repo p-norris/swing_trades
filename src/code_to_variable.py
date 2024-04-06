@@ -192,7 +192,7 @@ def high_close(df, nuro):
     return nuro
 
 
-def safe_gain(df, px, nuro):
+def safe_from_harm(df, px, nuro):
     target = []
     pxClose = df["Close"].astype(float)
     pxHigh = df["High"].astype(float)
@@ -272,7 +272,7 @@ if __name__ == "__main__":
 
         nuro = high_close(df, nuro)
 
-        pxClose, nuro = safe_gain(df, px, nuro)
+        pxClose, nuro = safe_from_harm(df, px, nuro)
 
         nuro = take_the_hit(nuro)
 
