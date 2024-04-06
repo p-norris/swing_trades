@@ -67,7 +67,7 @@ def ticker_histories(tickers, history):
 trade_dict = ticker_histories(tickers, history="1y")
 
 # get the **starting** balance from the trade history
-last_row = len(df_history) - 1
+last_row = len(df_history)
 opening_balance = df_history.iloc[last_row]["BALANCE"]
 
 # and the current balance
