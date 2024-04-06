@@ -349,6 +349,8 @@ def num_holding():
 
 def dont_buy_these():
     scan = pd.read_csv("src/scan.csv")
+    if len(scan) == 0:
+        exit("\\nNothing to buy.\\n")
     positions = pd.read_csv("src/positions.csv")
     stocks = list(positions.STOCK)
     for stock in stocks:
@@ -358,8 +360,6 @@ def dont_buy_these():
 
 def buy_these(scan, buy_number):
     scan = scan.head(buy_number)
-    if len(scan) == 0:
-        quit("\\nNothing to buy.\\n")
     scan = scan.sort_values(["CLOSE"], ascending=False)
     buy_list = list(scan["STOCK"])
     return buy_list
