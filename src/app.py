@@ -660,7 +660,9 @@ def sector_tree():
 
 # minor changes to dataframe for interface
 current_positions = df_positions
-current_positions = current_positions.drop(columns=["Hit Price", "Sell On 1", "Sell On 2", "BALANCE"])
+current_positions = current_positions.drop(columns=["Hit_94%", "Hit_97.5%", 'High',
+                                                    'Sell On', 'Pattern', 'Activity',
+                                                    'Strength','Multiplier', 'P'])
 current_positions["Target Price"] = current_positions["Target Price"].round(2)
 
 if len(current_positions) == 0:
