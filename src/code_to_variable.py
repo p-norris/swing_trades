@@ -456,7 +456,7 @@ def begin():
     print("\\n", time1)
 
 
-def get_times():
+def good_times():
     hours = pd.read_csv("src/hours.csv")
     get_hit = hours.loc[0, "at_10_10"]
     two_til_four = hours.loc[0, "at_two_til"]
