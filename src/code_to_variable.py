@@ -1,8 +1,8 @@
 # scan - 9
-# positions - 407
-# exits - 549
-# interface - 741
-# app - 2003
+# positions - 300
+# exits - 434
+# interface - 717
+# app - 1981
 
 import dash_mantine_components as dmc
 
@@ -20,100 +20,51 @@ scan_file = dmc.Prism('''
 import pandas as pd
 import numpy as np
 import yfinance as yf
-import statistics
-
-# terminal notes establishing the run execution
-print("\\n", "Today's Stocks")
-time1 = pd.Timestamp.now()
-time1 = time1.floor(freq="S")
-print("\\n", time1)
-
-# create the dataframe where all relevant information
-# will ultimately be stored for other files to use
-final = pd.DataFrame()
-
-# net is used to test a desired exit price for trades
-# but is not used to calculate the actual exit price
-# Close Price * net = Exit Price
-net = 1.009
+import time
 
 
-# function to get stock data from yfinance
+def lets_go():
+    time = pd.Timestamp.now()
+    time = time.floor(freq="s")
+    return time
+
+
+def considerations():
+    Tickers = pd.read_csv("src/tickers.csv")
+    tickers = Tickers["SYMBOL"].to_list()
+    stocks = ticker_histories(tickers, history="282d")
+    return stocks, tickers
+
+
+def the_dataframe():
+    final = pd.DataFrame(
+        columns=[
+            "STOCK",
+            "P",
+            "sig",
+            "BUY",
+            "Activity",
+            "Strength",
+            "HIGH",
+            "CLOSE",
+            "Multiplier",
+            "SellAt",
+            "HitAt",
+        ]
+    )
+    return final
+
+
 def ticker_histories(tickers, history):
-    df = yf.download(tickers, group_by="ticker", period=history)
-    dict = {idx: gp.xs(idx, level=0, axis=1) for idx, gp in df.groupby(level=0, axis=1)}
-    return dict
+    stocks = yf.download(tickers, group_by="ticker", period=history)
+    return stocks
 
 
-# does the stock meet the minimum price requirement?
-def price_threshold(df):
-    ave_price_1 = df['Close'].rolling(15).mean()
-    ave_price_2 = df['Close'].rolling(100).mean()
-    df = df.assign(ave_price_1=ave_price_1)
-    df = df.assign(ave_price_2=ave_price_2)
-    p_1 = df['ave_price_1'].to_numpy()
-    p_2 = df['ave_price_2'].to_numpy()
-
-    ap_1 = p_1[-1]
-    ap_2 = p_2[-1]
-
-    if (ap_1 >= 1) & (ap_2 >= 1):
-        return True
-    return False
-
-
-# does the stock meet the minimum volume requirement?
-def volume_threshold(df):
-    Vol40 = df["Volume"].rolling(40).mean()
-    df = df.assign(Vol40=Vol40)
-    V = df["Vol40"].to_numpy()
-    AV = V[-1]
-    if AV >= 350_000:
-        return True
-    return False
-
-
-# does the stock meet the minimum volatility requirement?
-def volatility_threshold(df):
-    volati_list = df['Close'].tolist()
-    try:
-        volati_year = statistics.stdev(volati_list)
-    except:
-        return False
-    volati_month = statistics.stdev(volati_list[-20:])
-    if volati_month < volati_year * 1.5:
-        return True
-    return False
-
-
-# is the stock experiencing outlier price levels?
-def outlier_threshold(df):
-    close_list = df["Close"].tolist()
-    outlier_list = np.array(close_list)
-    mean = np.mean(outlier_list, axis=0)
-    sd = np.std(outlier_list, axis=0)
-    clean_list = [x for x in close_list if (x > mean - 2 * sd)]
-    clean_list = [x for x in clean_list if (x < mean + 2 * sd)]
-    clean_mean = np.mean(clean_list, axis=0)
-
-    month_list = df['Close'].tolist()
-    month_list = month_list[-20:]
-    month_mean = np.mean(month_list, axis=0)
-
-    if (month_mean < clean_mean * 1.75) & (month_mean > clean_mean * 0.5):
-        return True
-    return False
-
-
-# assign the current stock's symbol to the new row list, nuro
 def what_stock(ticker):
-    nuro = []
-    nuro.append(ticker)
+    nuro = [ticker]
     return nuro
 
 
-# add the moving averages to the dataframe
-# that will be used in signal generation
 def rolling_MAs(df):
     ma_3 = df["Close"].rolling(3).mean().round(3)
     ma_6 = df["Close"].rolling(6).mean().round(3)
@@ -123,14 +74,10 @@ def rolling_MAs(df):
     return df
 
 
-# indicates in the stock's history where the 3-day moving average
-# exceeds the 6-, 13-, and 21-day moving averages AND label those
-# instances as a signal -- Gain or Loss
-def the_test(df):
-    # is the next day gain at least "net" of a percent?
-    df["Target"] = (df["Close"]) * net
+def testing(df):
+    df["Target"] = (df["Close"]) * 1.011
     df["Max1"] = df["High"].shift(-1).round(2)
-    df["Max2"] = df["High"].shift(-2).round(2)  # needed in take_the_hit()
+    df["Max2"] = df["High"].shift(-2).round(2)
     df["Trigger"] = np.where(
         (
                 (df["Close"] >= df["MA3"])
@@ -144,260 +91,206 @@ def the_test(df):
     return df
 
 
-# how well does the_test() work?
-# determines the probability of successfully generated signals
 def p(df, nuro):
-    px = df["Trigger"].to_numpy()  # make a list of Gains/Losses
-    px = px[:-1]  # drop that last element (needs tomorrow's data)
-    G009 = np.count_nonzero(px == "Gain")  # count gains
-    L009 = np.count_nonzero(px == "Loss")  # count losses
-    if G009 | L009 == 0:  # go to next loop iteration is either is zero
+    px = df["Trigger"].to_numpy()
+    pxx = px[:-1]
+    G009 = np.count_nonzero(pxx == "Gain")
+    L009 = np.count_nonzero(pxx == "Loss")
+    if G009 | L009 == 0:
         return -1, -1, -1
-    p_tally = G009 / (G009 + L009)  # find probability of gains
-    if p_tally < 0.8:  # reject probabilities below 80%
+    p_tally = round(G009 / (G009 + L009), 3)
+    if p_tally < 0.8:
         return -1, -1, -1
-    nuro.append(p_tally)  # add value to the new row
+    nuro.append(p_tally)
     return p_tally, px, nuro
 
 
-# buy signal will only generate according to the follow
-# scenarios of 0s, Gains, and Loss
-def the_signal(Px009, nuro):
+def signs(Px009, nuro):
+    six_off = Px009[-6]
+    five_off = Px009[-5]
     four_from_last = Px009[-4]
     antepenultimate = Px009[-3]
     penultimate = Px009[-2]
     ultimate = Px009[-1]
+    if (
+            (six_off == "Gain")
+            & (five_off == "0")
+            & (four_from_last == "0")
+            & (antepenultimate == "0")
+            & (penultimate == "0")
+            & (ultimate == "Loss")
+    ):
+        buy, sig = "Yes", "6"
+    if (
+            (five_off == "Gain")
+            & (four_from_last == "0")
+            & (antepenultimate == "0")
+            & (penultimate == "0")
+            & (ultimate == "Loss")
+    ):
+        buy, sig = "Yes", "5"
+    if (
+            (four_from_last == "Gain")
+            & (antepenultimate == "0")
+            & (penultimate == "0")
+            & (ultimate == "Loss")
+    ):
+        buy, sig = "Yes", "4"
     if (
             (four_from_last == "0")
             & (antepenultimate == "0")
             & (penultimate == "0")
             & (ultimate == "Loss")
     ):
-        buy = "Yes"
+        buy, sig = "Yes", "1"
     elif (
             (four_from_last == "0")
             & (antepenultimate == "0")
             & (penultimate == "Gain")
             & (ultimate == "Loss")
     ):
-        buy = "Yes"
+        buy, sig = "Yes", "2"
     elif (
             (four_from_last == "0")
             & (antepenultimate == "Gain")
             & (penultimate == "Gain")
             & (ultimate == "Loss")
     ):
-        buy = "Yes"
+        buy, sig = "Yes", "3"
     else:
-        buy = "No"
-    sig = [four_from_last, antepenultimate, penultimate, ultimate]
+        buy, sig = "No", "0"
     nuro.append(sig)
     nuro.append(buy)
     return nuro
 
 
-# how often does this stock generate a buy signal that
-# results in a Gain? -- the more the better
-# there is a 20% threshold built into this function
 def occurrences(px, nuro):
     zeros = np.count_nonzero(px == "0")
     array_length = len(px)
     activity = 1 - (zeros / (array_length))
     if activity < 0.1999:
         return -1, -1
-    nuro.append(activity)
+    nuro.append(round(activity, 3))
     return activity, nuro
 
 
-# scores the p-value with how actively it generates signals
-# times 200 for roughly a 100-point scale
 def strength(activity, p_tally, nuro):
-    strength = round(((p_tally * activity) * 200), 1)
+    strength = round(
+        ((p_tally * p_tally * p_tally * activity) * 396.5), 1
+    )
     nuro.append(strength)
     return nuro
 
 
-# save these values for other files to use
-# especially helpful in the terminal
 def high_close(df, nuro):
     h = df["High"].astype(float)
     high = h.iloc[-1]
     c = df["Close"].astype(float)
     close = c.iloc[-1]
-    nuro.append(high)
-    nuro.append(close)
+    nuro.append(round(high, 2))
+    nuro.append(round(close, 2))
     return nuro
 
 
-# determine the sell price based on gain history
 def safe_gain(df, px, nuro):
-    # create a list for percent high above close
     target = []
     pxClose = df["Close"].astype(float)
     pxHigh = df["High"].astype(float)
 
-    # get the next high above the current close
-    # and add to the target list
     for i in range(len(px) - 1):
         if px[i] == "Gain":
             x = (pxHigh.iloc[i + 1] - pxClose.iloc[i]) / pxHigh.iloc[i + 1]
             target.append(x)
+    target.sort()
 
-    # the sell price is determined by finding an amount that's
-    # greater than the close - a portion of the target list's range
-    # provides a historically safe exit point
     if len(target) > 5:
-        sell_price = pxClose.iloc[-1] * (1 + np.quantile(target, 0.35))
+        multiplier = 1 + np.quantile(target, 0.375)
+        sell_price = pxClose.iloc[-1] * multiplier
     else:
-        sell_price = pxClose.iloc[-1] * (net - 0.002)  # in case test period changes
-    nuro.append(sell_price)
+        sell_price = pxClose.iloc[-1] * 1.011
+    nuro.append(round(multiplier - 1, 3))
+    nuro.append(round(sell_price, 2))
     return pxClose, nuro
 
 
-# determine the exit price based on loss history
-def take_the_hit(pxClose, nuro, df):
-    # loss on first day after close
-    df["loss_pct_1"] = np.where(
-        (df["Trigger"] == "Loss"), ((df["Max1"] - df["Close"]) / df["Close"]), 0
-    )
-
-    # loss on second day after close
-    df["loss_pct_2"] = np.where(
-        (df["Trigger"] == "Loss"), ((df["Max2"] - df["Close"]) / df["Close"]), 0
-    )
-
-    # occasionally, a stock will generate no losses
-    # so, to avoid dividing by zero:
-    l0 = list(filter(None, df["loss_pct_1"]))
-    l1 = list(filter(None, df["loss_pct_2"]))
-    l1 = [n for n in l1 if n < 0]
-    if l0 == 0:
-        return -1, -1, -1
-    if l1 == 0:
-        return -1, -1, -1
-
-    # get the mean for each day after close
-    loss_mean_1 = sum(l0) / len(l0)
-    loss_mean_2 = sum(l1) / len(l0)
-    hit_pct = ((loss_mean_1 + loss_mean_2) / 2) * 0.25  # percentage of the mean
-
-    # safe-guards
-    if hit_pct < -0.0225:
-        hit_pct = -0.0225
-    if np.isnan(hit_pct):
-        hit_pct = -0.0225  # in case of yfinance error
-
-    take_hit = pxClose.iloc[-1] * (1 + hit_pct)  # this is the losing exit price target
-    nuro.append(take_hit)
+def take_the_hit(nuro):
+    hit_pct = -0.025
+    take_hit = pxClose.iloc[-1] * (1 + hit_pct)
+    nuro.append(round(take_hit, 2))
     return nuro
 
 
-# this feature is for observational purposes only
-def sale_target(pxClose, sell_price, nuro):
-    last_close = pxClose[-1]
-    sell_pct = (sell_price - last_close) / last_close
-    nuro.append(sell_pct)
-    return nuro
+def update_scan_dataset(nuro):
+    final.loc[len(final)] = nuro
+    return final
 
 
-# OPERATION ***********************************************************
+def being_picky(final):
+    if len(final) > 0:
+        final = final.sort_values(
+            ["BUY", "Strength", "P"], ascending=[False, False, False]
+        )
+        final = final[final["BUY"] == "Yes"]
+        return final
 
-Tickers = pd.read_csv("tickers_sectors_6000.csv")
 
-tickers = Tickers["SYMBOL"].to_list()
-dicti_stocks = ticker_histories(tickers, history="282d")
+def an_ending(final):
+    final = final.reset_index(drop=True)
+    final.to_csv("src/scan.csv", index=False)
+    return final
 
-for ticker in tickers:
-    df = dicti_stocks[ticker]
 
-    # filter
-    x1 = price_threshold(df)
-    if not x1:
-        continue  # to avoid junky stocks
+# MAIN ***********************************************************
 
-    # filter
-    x2 = volume_threshold(df)
-    if not x2:
-        continue  # to avoid stocks that do not trade
-        # often enough for quick exits
+if __name__ == "__main__":
+    print("\\n", "Today's Stocks")
+    time1 = lets_go()
+    print("\\n", time1)
+    final = the_dataframe()
+    stocks, tickers = considerations()
 
-    # filter
-    x3 = volatility_threshold(df)
-    if not x3:
-        continue  # to avoid unnecessary risk
+    for ticker in tickers:
+        df = pd.DataFrame(stocks[ticker].to_records())
 
-    # filter
-    x4 = outlier_threshold(df)
-    if not x4:
-        continue  # to avoid unnecessary risk
+        nuro = what_stock(ticker)
 
-    # STOCK
-    nuro = what_stock(ticker)
+        df = rolling_MAs(df)
 
-    # Moving Averages
-    df = rolling_MAs(df)
+        df = testing(df)
 
-    # assign Gain or Loss based on Moving Averages
-    df = the_test(df)
+        p_tally, px, nuro = p(df, nuro)
+        if p_tally == -1:
+            continue
 
-    # probability of a Gain not being a Loss
-    p_tally, px, nuro = p(df, nuro)
-    if p_tally == -1:
-        continue  # to avoid dividing by zero
+        nuro = signs(px, nuro)
 
-    # Buy - when to produce a signal and to not
-    # make a trade at the end of its signal streak
-    nuro = the_signal(px, nuro)
+        activity, nuro = occurrences(px, nuro)
+        if activity == -1:
+            continue
 
-    # Activity - how often the 3-day MA crosses all the others
-    activity, nuro = occurrences(px, nuro)
-    if activity == -1:
-        continue  # to avoid stocks that do not generate enough data
+        nuro = strength(activity, p_tally, nuro)
 
-    # Strength - metric devised to indicate the best candidates for trades
-    nuro = strength(activity, p_tally, nuro)
+        nuro = high_close(df, nuro)
 
-    # adding HIGH and CLOSE to the final record
-    nuro = high_close(df, nuro)
+        pxClose, nuro = safe_gain(df, px, nuro)
 
-    # SellAt - upside price for exiting the position
-    # based on sufficient history or .2% less than the test
-    pxClose, nuro = safe_gain(df, px, nuro)
+        nuro = take_the_hit(nuro)
 
-    # HitAt - downside price for exiting the position
-    # based on sufficient history and a max of 2.25% loss
-    nuro = take_the_hit(pxClose, nuro, df)
+        final = update_scan_dataset(nuro)
 
-    temp_df = pd.DataFrame(
-        [nuro],
-        columns=[
-            "STOCK",
-            "P",
-            "sig",
-            "BUY",
-            "Activity",
-            "Strength",
-            "HIGH",
-            "CLOSE",
-            "SellAt",
-            "HitAt",
-        ],
-    )
-    # add the new row (nuro) to the final dataframe by concatenation
-    final = pd.concat([final, temp_df])
+    ah_finally = being_picky(final)
 
-if len(final) > 0:
-    final = final.sort_values(
-        ["BUY", "Strength", "P"], ascending=[False, False, False]
-    )
-    final = final[final['BUY'] == 'Yes']
+    final = an_ending(ah_finally)
 
-final.to_csv("scan.csv", index=False)
+    print('\\nSTRENGTH: Superior: 70-100, Excellent: 56-69, Very Good: 46-55, Good: 40-45')
+    print(final)
 
-time = pd.Timestamp.now()
-time = time.floor(freq="S")
-elapsed = time - time1
-print("\\n", time, "\\n", elapsed, "\\n")
+    time = pd.Timestamp.now()
+    time = time.floor(freq="s")
+    elapsed = (time - time1)
+    elapsed = elapsed.total_seconds()
+    print("\\n", time, "\\n", elapsed, "seconds\\n")
+
 
 ''',
                       language="python",
@@ -417,130 +310,122 @@ import pandas as pd
 import yfinance as yf
 import math
 
-# for terminal, signal beginning of script with time
-print("\\n", "Positions")
-time1 = pd.Timestamp.now()
-time1 = time1.floor(freq="S")
-print("\\n", time1)
 
-# read in positions and history
-df_positions = pd.read_csv("positions.csv")
-df_history = pd.read_csv("history.csv")
+def time_now():
+    right_now = pd.Timestamp.now().strftime("%H:%M:%S")
+    return right_now
 
-# get the beginning balance
-balance = df_history.iloc[0]["BALANCE"]
-if count < 3:
-    current_balance = df_positions["Cost"].sum()
-    balance = balance - current_balance
 
-# only take enough positions to have three
-# the count is how many to buy in this iteration
-count = 3 - len(df_positions)
+def the_date():
+    date_today = str(pd.Timestamp.now().date())
+    return date_today
 
-# is there room to take new position?
-# max number of positions is three
-if count == 0:
-    exit("The previous three positions are still being held.")
 
-# read in the top pics for trading
-df_buys = pd.read_csv("scan.csv", nrows=count)
-if len(df_buys) == 0:
-    exit("Today's not the day to be buying stocks!")
+def get_balance():
+    history = pd.read_csv("src/history.csv")
+    temp_balance = history.iloc[0]["BALANCE"]
+    positions = pd.read_csv("src/positions.csv")
+    if len(positions) > 0:
+        outstanding = positions["Cost"].sum()
+    else:
+        outstanding = 0
+    balance = (temp_balance - outstanding).round(2)
+    return balance
 
-# get list of tickers to buy from the 'scan' dataset
-buys = df_buys["STOCK"].tolist()
 
-# retrieve the stock information from yahoo!
-# and keep only the closing prices
-df = yf.download(buys, group_by="Ticker", period="1d")
-df = df.stack(level=0).rename_axis(["Date", "STOCK"]).reset_index(level=1)
-if len(buys) > 1:
-    not_needed = ["High", "Low", "Adj Close", "Open", "Volume"]
-    df = df.drop(not_needed, axis=1)
-    df.reset_index(inplace=True)
-else:
-    df.reset_index(inplace=True)
-    df = df.loc[[4]]
-    df.iat[0, 1] = buys[0]
-    df.columns = ["Date", "STOCK", "Close"]
+def price(position):
+    df = yf.download(position, period="1d")
+    price = df.iloc[0, 3]
+    return price
 
-# merge the "scan" dataset with the new df
-# and sort so that least expensive stock is last
-# to maximize dollars spent in trades
-df_1 = pd.merge(df, df_buys, on="STOCK")
-df_1 = df_1.sort_values(["Close"], ascending=False, ignore_index=True)
 
-# how many trades need to be made?
-num_to_buy = len(df_1)
+def num_holding():
+    positions = pd.read_csv("src/positions.csv")
+    holding_num = len(positions)
+    if holding_num == 3:
+        exit("\\nThe previous position(s) are still being held.\\n")
+    return holding_num
 
-# loop through each new purchase to add items to the
-# 'positions' dataset, one new row (nuro) at a time
-# the allocation will be the dollar amount per position to purchase
-# Timedeltas used to create date for sale conditions
-allocation = 0
-expiration_1 = pd.Timedelta(1, "D")
-expiration_2 = pd.Timedelta(2, "D")
 
-for i in range(num_to_buy):
-    allocation = balance / (count - i)
-    stock = df_1.iloc[i]["STOCK"]
-    buy_date = pd.Timestamp.now()
-    sell_date_1 = buy_date + expiration_1
-    sell_date_2 = buy_date + expiration_2
-    buy_date = buy_date.floor(freq="T")
-    sell_date_1 = sell_date_1.floor(freq="T")
-    sell_date_2 = sell_date_2.floor(freq="T")
-    share_cost = (df_1.iloc[i]["Close"]).round(3)
-    num_shares = math.floor(allocation / share_cost)
-    total_cost = (share_cost * num_shares).round(2)
-    exit_trigger = (df_1.iloc[i]["SellAt"]).round(3)
-    exit_hit = (df_1.iloc[i]["HitAt"]).round(3)
-    balance = balance - total_cost
-    nuro = [stock,
-            buy_date,
-            share_cost,
-            num_shares,
-            total_cost,
-            exit_trigger,
-            exit_hit,
-            sell_date_1,
-            sell_date_2,
-            balance]
-    df_2 = pd.DataFrame(
-        [nuro],
-        columns=[
-            "STOCK",
-            "Buy Date",
-            "Share Price",
-            "Shares",
-            "Cost",
-            "Target Price",
-            "Hit Price",
-            "Sell On 1",
-            "Sell On 2",
-            "BALANCE",
-        ],
-    )
-    # add the new rows to the existing positions dataset
-    df_positions = pd.concat([df_positions, df_2], ignore_index=True)
-    nuro.clear()
+def dont_buy_these():
+    scan = pd.read_csv("src/scan.csv")
+    positions = pd.read_csv("src/positions.csv")
+    stocks = list(positions.STOCK)
+    for stock in stocks:
+        scan = scan[scan["STOCK"] != stock]
+    return scan
 
-# normalize the dates so that they are properly formatted for future use
-df_positions['Buy Date'] = pd.DatetimeIndex(df_positions['Buy Date']).normalize()
-df_positions['Sell On 1'] = pd.DatetimeIndex(df_positions['Sell On 1']).normalize()
-df_positions['Sell On 2'] = pd.DatetimeIndex(df_positions['Sell On 2']).normalize()
 
-# save to csv for future use
-df_positions.to_csv("positions.csv", index=False)
+def buy_these(scan, buy_number):
+    scan = scan.head(buy_number)
+    if len(scan) == 0:
+        quit("\\nNothing to buy.\\n")
+    scan = scan.sort_values(["CLOSE"], ascending=False)
+    buy_list = list(scan["STOCK"])
+    return buy_list
 
-# print to terminal
-print("\\nPositions", df_positions)
 
-# print end time info to terminal
-time = pd.Timestamp.now()
-time = time.floor(freq="S")
-elapsed = time - time1
-print("\\n", time, "\\n", elapsed, "\\n")
+def sell_date():
+    hours = pd.read_csv("src/hours.csv")
+    sell_on = str(pd.to_datetime(hours.loc[2, "date"]).date())
+    return sell_on
+
+
+def build_row(ticker, share_cost, balance):
+    scan = pd.read_csv("src/scan.csv")
+    multiplier = scan.loc[scan.STOCK == ticker, "Multiplier"].squeeze()
+    num_shares = math.floor(balance / share_cost)
+    close = scan.loc[scan.STOCK == ticker, "CLOSE"].squeeze()
+    date = the_date()
+    sell_on = sell_date()
+    nuro = []
+    nuro.append(ticker)
+    nuro.append(date)
+    nuro.append(sell_on)
+    nuro.append(scan.loc[scan.STOCK == ticker, "sig"].squeeze())
+    nuro.append((scan.loc[scan.STOCK == ticker, "P"].squeeze()).round(3))
+    nuro.append((scan.loc[scan.STOCK == ticker, "Activity"].squeeze()).round(3))
+    nuro.append((scan.loc[scan.STOCK == ticker, "Strength"].squeeze()).round(3))
+    nuro.append(multiplier.round(3))
+    nuro.append((scan.loc[scan.STOCK == ticker, "HIGH"].squeeze()).round(3))
+    nuro.append(share_cost.round(3))
+    nuro.append(num_shares)
+    nuro.append((num_shares * share_cost).round(3))  # position cost
+    nuro.append((share_cost * (1 + multiplier)).round(3))  # target price
+    nuro.append((close * 0.94).round(3))
+    nuro.append((close * 0.975).round(3))
+    return nuro
+
+
+def update_positions(nuro):
+    positions = pd.read_csv("src/positions.csv")
+    positions.loc[len(positions)] = nuro
+    positions.to_csv("src/positions.csv", index=False)
+    return positions
+
+
+def buy_stock(buy_number, buy_list):
+    for i in range(0, buy_number):
+        bal = get_balance()
+        balance = bal / buy_number
+        ticker = buy_list[i]
+        share_cost = price(ticker)
+        nuro = build_row(ticker, share_cost, balance)
+        positions = update_positions(nuro)
+    return positions
+
+
+if __name__ == "__main__":
+    print('Positions:')
+    current_number = num_holding()
+    buy_number = 3 - current_number
+    scan = dont_buy_these()
+    buy_list = buy_these(scan, buy_number)
+    positions = buy_stock(buy_number, buy_list)
+    print("\\nPositions",positions, "\\n")
+    right_now = time_now()
+    print("\\nPositions -", right_now, "\\n")
+
 ''',
                            language="python",
                            withLineNumbers=True,
@@ -560,178 +445,269 @@ exits_file = dmc.Prism('''
 """
 
 import pandas as pd
-import numpy as np
 import yfinance as yf
-
-# for terminal, signal beginning of script with time
-print("\\n", "Exits", "\\n")
-time1 = pd.Timestamp.now()
-time1 = time1.floor(freq="S")
-print(time1, "\\n")
-
-# read in the relevant datasets
-df_positions = pd.read_csv("positions.csv")
-print('\\n', df_positions, '\\n')
+import time
 
 
-if len(df_positions) == 0:
-    exit("Got nothing to trade. Must be a bad market.")
-
-df_history = pd.read_csv("history.csv")
-df_scan = pd.read_csv("scan.csv", nrows=3)
-df_all_sectors = pd.read_csv('tickers_sectors_6000.csv')
-market_dates = pd.read_csv('hours.csv')
-
-# establish necessary variables
-new_positions = df_scan['STOCK'].tolist()  # potential buys for go_for_a_run()
-
-positions = df_positions["STOCK"].tolist()  # list of stocks to sell
-
-balance = df_history.iloc[0]["BALANCE"]  # get balance for updating sells
-
-sectors_dict = dict(zip(df_all_sectors.SYMBOL,  # create dict of sectors for dashboard
-                        df_all_sectors.SECTOR))
-
-current_day = str(pd.Timestamp.now().date())  # current date for sells / trade history
-
-# loop through each of the stocks in the positions list
-# to determine trade and value, then record the exchange
-# in the history and positions dataframes
-# declare stock variable to use when assigning values
-# from a particular 'stock' from the positions list
-stock = 0
-for position in positions:
-    print('\\nSTOCK:', stock, '\\n')
-    # get the date that the stock must be sold on
-    timed_out = df_positions.loc[stock, "Sell On 2"]  # sell date when target isn't reached
-    print('HERE:', position, 'at', timed_out)
-
-    # if the new scan returns the same ticker
-    # that is already being held, keep it for
-    # another cycle
-    def go_for_a_run(position, new_positions, df_positions):
-        if position in new_positions:
-            market_dates_1 = market_dates.loc[1, 'market_open']
-            market_dates_1 = str(pd.to_datetime(market_dates_1).date())
-            market_dates_2 = market_dates.loc[2, 'market_open']
-            market_dates_2 = str(pd.to_datetime(market_dates_2).date())
-            df_positions['Sell On 1'] = np.where(df_positions['STOCK'] == position,
-                                                 market_dates_1, df_positions['Sell On 1'])
-            df_positions['Sell On 2'] = np.where(df_positions['STOCK'] == position,
-                                                 market_dates_2, df_positions['Sell On 2'])
-            df_positions.to_csv("positions.csv", index=False)
-            return True
-        else:
-            return False
+def begin():
+    print("\\n", "sellSchwab")
+    time1 = pd.Timestamp.now()
+    time1 = time1.floor(freq="s")
+    print("\\n", time1)
 
 
-    # saves trade data in row format to add to history file
-    def trade_record(sell_price, balance):
-        buy_date = df_positions.iloc[stock]["Buy Date"]
-        sell_date = str(pd.Timestamp.now().date())
-        share_price = df_positions.iloc[stock]["Share Price"].round(2)
-        shares = df_positions.iloc[stock]["Shares"]
-        cost = df_positions.iloc[stock]["Cost"].round(2)
-        sell_price = sell_price.round(2)
-        income = (shares * sell_price).round(2)
-        profit = (income - cost).round(2)
-        pct_chg = ((profit / cost) * 100).round(2)
-        balance = (balance + profit).round(2)
-        nuro = [position,
-                sectors_dict[position],
-                buy_date,
-                sell_date,
-                shares,
-                share_price,
-                cost,
-                sell_price,
-                income,
-                profit,
-                pct_chg,
-                balance]
-        return nuro, balance
+def get_times():
+    hours = pd.read_csv("src/hours.csv")
+    get_hit = hours.loc[0, "at_10_10"]
+    two_til_four = hours.loc[0, "at_two_til"]
+    one_til_four = hours.loc[0, "at_one_til"]
+    return get_hit, two_til_four, one_til_four
 
 
-    # updates the positions and history dataframes
-    def update_datasets(nuro, df_history, df_positions):
-        df_history.loc[-1] = nuro
-        df_history.index = df_history.index + 1
-        df_history.sort_index(inplace=True)
-        df_positions = df_positions.drop(df_positions.index[stock])
-        df_positions = df_positions.reset_index(drop=True)
-        nuro.clear()
-        return df_history, df_positions
+def get_positions():
+    positions = pd.read_csv('src/positions.csv')
+    if len(positions) == 0:
+        exit("\nThere's nothing to trade.\\n")
+    return positions
 
-    
-    # get trade history for one day per minute from yahoo!
-    df = yf.download(position, period="1d", interval="1m")
 
-    # save to variables the trade prices
-    high_price = df_positions.iloc[stock]["Target Price"]
-    low_price = df_positions.iloc[stock]["Hit Price"]
+def get_sectors():
+    df_all_sectors = pd.read_csv("src/tickers.csv")
+    sectors_dict = dict(
+        zip(
+            df_all_sectors.SYMBOL,
+            df_all_sectors.SECTOR,
+        )
+    )
+    return sectors_dict
 
-    # assign False to 'sold' variable so that 'sell_price'
-    # does not incorrectly update if already assigned
-    sold = False
 
-    # result = hi_low(df)
-    for i in range(len(df)):
-        if df.iloc[i]["Close"] >= high_price:
-            sell_price = df.iloc[i]["Close"]
-            nuro, balance = trade_record(sell_price, balance)
-            df_history, df_positions = update_datasets(nuro, df_history, df_positions)
-            sold = True
-            print('\\nSold High\\n')
-            break
-        elif (current_day == timed_out) & (i > 60):  # updated to better reflect strategy on 23 Oct 2
-            if df.iloc[i]["Close"] <= low_price:
-                sell_price = df.iloc[i]["Close"]
-                nuro, balance = trade_record(sell_price, balance)
-                df_history, df_positions = update_datasets(nuro, df_history, df_positions)
-                sold = True
-                print('\\nSold Low\\n')
+def time_now():
+    right_now = pd.Timestamp.now().strftime("%H:%M")
+    return right_now
+
+
+def the_date():
+    date_today = str(pd.Timestamp.now().date())
+    return date_today
+
+
+def data_list():
+    positions = get_positions()
+    collected_data = []
+    for i in range(len(positions)):
+        data_list = [True, positions.loc[i, "STOCK"], positions.loc[i, "Shares"], positions.loc[i, "Target Price"],
+                     positions.loc[i, "Hit_94%"], positions.loc[i, "Hit_97.5%"], positions.loc[i, "Sell On"]]
+        collected_data.append(data_list)
+    return collected_data
+
+
+def price(position):
+    try:
+        df = yf.download(position, period="1d")
+        price = df.iloc[0, 3]
+    except:
+        print(position, 'failed to download properly.\\n')
+        price = -1
+    return price
+
+
+def get_balance():
+    history = pd.read_csv("src/history.csv")
+    balance = history.iloc[0]["BALANCE"]
+    return balance
+
+
+def update_positions(nuro):
+    positions = get_positions()
+    positions.loc[len(positions)] = nuro
+    positions.to_csv("src/positions.csv", index=False)
+    return positions
+
+
+def trade_record(ticker, sell_price):
+    positions = get_positions()
+    sectors_dict = get_sectors()
+    buy_date = positions.loc[positions["STOCK"] == ticker, "Buy Date"].squeeze()
+    sell_date = str(pd.Timestamp.now().date())
+    share_price = (positions.loc[positions["STOCK"] == ticker, "Share Price"].squeeze()).round(3)
+    shares = (positions.loc[positions["STOCK"] == ticker, "Shares"].squeeze())
+    cost = round(shares * share_price, 2)
+    sell_price = round(sell_price, 2)
+    income = round(shares * sell_price, 2)
+    profit = round(income - cost, 2)
+    pct_chg = round((profit / cost) * 100, 2)
+    prev_bal = get_balance()
+    balance = round(prev_bal + profit, 2)
+    nuro = [
+        ticker,
+        sectors_dict[ticker],
+        buy_date,
+        sell_date,
+        shares,
+        share_price,
+        cost,
+        sell_price,
+        income,
+        profit,
+        pct_chg,
+        balance,
+    ]
+    return nuro
+
+
+def update_datasets(ticker, nuro):
+    history = pd.read_csv("src/history.csv")
+    history.loc[-1] = nuro
+    history.index = history.index + 1
+    history.sort_index(inplace=True)
+    history.to_csv("src/history.csv", index=False)
+
+    nuro.clear()
+
+    positions = get_positions()
+    positions = positions[positions["STOCK"] != ticker]
+    positions = positions.reset_index(drop=True)
+    positions.to_csv("src/positions.csv", index=False)
+
+    num_positions = len(positions)
+    if num_positions == 0:
+        print("\\n\nDONE!\nHISTORY:\\n")
+        print(history.head(), "\n")
+        return False
+    return True
+
+
+def go_for_a_run(ticker):
+    print(ticker, "is going on a run!\\n")
+    hours = pd.read_csv("src/hours.csv")
+    positions = get_positions()
+    row_num = positions.loc[positions.STOCK == ticker].index[0]
+    new_date = str(pd.to_datetime(hours.loc[1, "date"]).date())
+    positions.at[row_num, "Sell On"] = new_date
+    positions.to_csv("src/positions.csv", index=False)
+
+    scan = pd.read_csv("src/scan.csv")
+    scan = scan[scan["STOCK"] != ticker]
+    scan.to_csv("src/scan.csv", index=False)
+    return
+
+
+def sell_as_is(ticker):
+    print(ticker, ": FOR SALE -- AS IS\\n")
+    quote = price(ticker)
+    if quote == -1: print('\\n\\nERROR!\\n\\n')
+    nuro = trade_record(ticker, quote)
+    holding = update_datasets(ticker, nuro)
+    return holding
+
+
+def get_money(stock_data, cashed_tickers, get_hit):
+    holding = True
+    while holding:
+        for i in range(len(stock_data)):
+            this_stock = stock_data[i]
+            ticker = this_stock[1]
+            if ticker in cashed_tickers:
+                continue
+            gain = this_stock[3]
+            right_now = time_now()
+            if right_now == get_hit:
+                holding = False
                 break
+            quote = price(ticker)
+            if price == -1: continue
+            print("g_m_QUOTE at", time_now() + ':', ticker + ":", quote, "vs", gain, "<- target\n")
+            if quote >= gain:
+                nuro = trade_record(ticker, quote)
+                holding = update_datasets(ticker, nuro)
+                cashed_tickers.append(ticker)
+                print(ticker, '- Sold Early\\n')
+                continue
+        time.sleep(31)
+    return cashed_tickers, holding
 
-    # has a position been listed as a buy for another day?
-    # if so, don't sell it and extent the sell dates
-    if sold is False:
-        running = go_for_a_run(position, new_positions, df_positions)
-        if running:
-            print(position, 'is running.')
-            stock += 1
-            continue
 
-    # if position does not meet either trade criteria,
-    # sell it at the end of the second day, then update
-    # the 'stock' variable for the next position
-    if (sold is False) & (current_day == timed_out):
-        row = len(df)
-        sell_price = df.iloc[row]['Close']
-        nuro, balance = trade_record(sell_price, balance)
-        df_history, df_positions = update_datasets(nuro, df_history, df_positions)
-        print('\\nTimed Out\\n')
-    elif (sold is False) & (current_day != timed_out):
-        print('\\nNEXT\\n')
-        stock += 1
+def get_more_money(stock_data, cashed_tickers, holding, two_til_four, one_til_four):
+    holding = True
+    date = the_date()
+    while holding:
+        for i in range(len(stock_data)):
+            this_stock = stock_data[i]
+            ticker = this_stock[1]
+            if ticker in cashed_tickers:
+                continue
+            gain = this_stock[3]
+            loss1 = this_stock[4]
+            loss2 = this_stock[5]
+            exit_date = this_stock[6]
+            quote = price(ticker)
+            if price == -1:
+                continue
+            right_now = time_now()
+            print("g_m_m_QUOTE at", right_now + ':', ticker + ":", quote, "vs", gain, "<- target price\n")
+            if quote >= gain:
+                nuro = trade_record(ticker, quote)
+                holding = update_datasets(ticker, nuro)
+                cashed_tickers.append(ticker)
+                print(ticker, '- Sold High\\n')
+                continue
+            elif date != exit_date:
+                if quote < loss1:
+                    nuro = trade_record(ticker, quote)
+                    holding = update_datasets(ticker, nuro)
+                    cashed_tickers.append(ticker)
+                    print(ticker, '- Sold Low, 94%\\n')
+                    continue
+            elif date == exit_date:
+                if quote < loss2:
+                    nuro = trade_record(ticker, quote)
+                    holding = update_datasets(ticker, nuro)
+                    cashed_tickers.append(ticker)
+                    print(ticker, '- Sold Low, 97.5%\\n')
+                    continue
+                elif right_now == two_til_four:
+                    scan = pd.read_csv("src/scan.csv")
+                    new_tickers = scan["STOCK"].tolist()
+                    if ticker in new_tickers:
+                        go_for_a_run(ticker)
+                        cashed_tickers.append(ticker)
+                        continue
+                    else:
+                        holding = sell_as_is(ticker)
+                        cashed_tickers.append(ticker)
+                        continue
+            if right_now == one_til_four:
+                holding = False
+                break
+            if len(stock_data) == len(cashed_tickers):
+                holding = False
+                break
+        time.sleep(31)
+    return
 
-# normalize the dates so that they are properly formatted for future use
-df_history['Buy Date'] = pd.DatetimeIndex(df_history['Buy Date']).normalize()
-df_history['Sell Date'] = pd.DatetimeIndex(df_history['Sell Date']).normalize()
 
-# save the position and history dataframes to csv files
-df_positions.to_csv("positions.csv", index=False)
-df_history.to_csv("history.csv", index=False)
+def sell_stock(stock_data): # MAIN()
+    cashed_tickers = []
+    get_hit, two_til_four, one_til_four = get_times()
 
-# update the terminal with status information
-print("\\nHistory:\\n", df_history)
+    print('\\n\\n\\n**** PHASE ONE: GET MONEY!!! ****\\n\\n\\n')
 
-print("\\n*** Positions: ***\\n", df_positions, "\\n") if len(df_positions) > 0 else print(
-    "\\n No current positions")
+    cashed_tickers, holding = get_money(stock_data, cashed_tickers, get_hit)
+    if len(stock_data) == len(cashed_tickers):
+        holding = False
 
-time = pd.Timestamp.now()
-time = time.floor(freq="S")
-elapsed = time - time1
-print("\\n", time, "\\n", elapsed, "\\n")
+    print('\\n\\n\\n**** PHASE TWO: GET MORE MONEY!!! ****\\n\\n\\n')
+
+    get_more_money(stock_data, cashed_tickers, holding, two_til_four, one_til_four)
+    return
+
+
+if __name__ == "__main__":
+    begin()
+    stock_data = data_list()
+    sell_stock(stock_data)
+
 
 ''',
                        language="python",
@@ -1398,7 +1374,9 @@ def sector_tree():
 
 # minor changes to dataframe for interface
 current_positions = df_positions
-current_positions = current_positions.drop(columns=["Hit Price", "Sell On 1", "Sell On 2", "BALANCE"])
+current_positions = current_positions.drop(columns=["Hit_94%", "Hit_97.5%", 'High',
+                                                    'Sell On', 'Pattern', 'Activity',
+                                                    'Strength','Multiplier', 'P'])
 current_positions["Target Price"] = current_positions["Target Price"].round(2)
 
 if len(current_positions) == 0:
@@ -1627,7 +1605,7 @@ app.layout = dbc.Container(
         ### FIFTH ROW
         dbc.Row(
             [
-                ## R5 - First Column - rercent change from start date to current for indices and trades
+                ## R5 - First Column - percent change from start date to current for indices and trades
                 dbc.Col(
                     [
                         html.H5("What's the relationship with the major indices?"),
@@ -2013,19 +1991,40 @@ import pandas_market_calendars as mc
 import schedule
 import subprocess
 import time
-from github import Github
 
 print("\\n", "Starting the Schedule", "\\n")
+
+
+# update stock tickers on Mondays for the week
+def weekly_tickers():
+    subprocess.run(["python", "tickers.py"])
+    return schedule.CancelJob
 
 
 # main function from which other functions run
 # when time and date satisfy the 'schedule' mechanism,
 # this function is called to execute stock trading files
 def market_hours():
+    # execute the trading file
+    def selling():
+        print('Selling')
+        subprocess.run(["python", "sell.py"])
+        return schedule.CancelJob
+
+    def scaning():
+        print('Scaning')
+        subprocess.run(["python", "scan.py"])
+        return schedule.CancelJob
+
+    def buying():
+        print('Buying')
+        subprocess.run(["python", "buy.py"])
+        return schedule.CancelJob
+
     # start time is current time from which end time is determined
     start_date = pd.Timestamp.now()
-    five_days = pd.Timedelta(5, "D")
-    end_date = start_date + five_days
+    seven_days = pd.Timedelta(7, "D")
+    end_date = start_date + seven_days
 
     # to avoid running the python files every day
     # and creating duplicate information, the
@@ -2036,113 +2035,72 @@ def market_hours():
     open_time = schd.schedule(start_date=start_date, end_date=end_date)
 
     # add columns to df for time in hours, minutes, and seconds
-    four_hours = pd.Timedelta(4, "hours")
-    eight_minutes = pd.Timedelta(8, "minutes")
-    ten_seconds = pd.Timedelta(10, "seconds")
-    open_time["market_open"] = open_time["market_open"] - four_hours
-    open_time["market_close"] = open_time["market_close"] - four_hours
-    open_time["run_code_1"] = open_time["market_close"] + ten_seconds
-    open_time["run_code_1"] = open_time["run_code_1"].dt.strftime("%H:%M:%S")
-    open_time["run_code_2"] = open_time["market_close"] + ten_seconds + ten_seconds
-    open_time["run_code_2"] = open_time["run_code_2"].dt.strftime("%H:%M:%S")
-    open_time["run_code_3"] = open_time["market_close"] + eight_minutes
-    open_time["run_code_3"] = open_time["run_code_3"].dt.strftime("%H:%M:%S")
-    open_time["run_code_4"] = open_time["market_close"] + eight_minutes + ten_seconds
-    open_time["run_code_4"] = open_time["run_code_4"].dt.strftime("%H:%M:%S")
+    time_zone_correction = pd.Timedelta(4, "hours")  # adjust by 1 hour for DST
+    one_minute = pd.Timedelta(1, "minutes")
+    two_minutes = pd.Timedelta(2, "minutes")
+    three_minutes = pd.Timedelta(3, "minutes")
+    forty_minutes = pd.Timedelta(40, "minutes")
+    twelve_seconds = pd.Timedelta(12, "seconds")
 
-    print('\\n', open_time, '\\n')
+    open_time["market_open"] = open_time["market_open"] - time_zone_correction
+    open_time["market_close"] = open_time["market_close"] - time_zone_correction
+    open_time["at_09_30"] = (open_time["market_open"]).dt.strftime("%H:%M")
+    open_time["at_10_10"] = (open_time["market_open"] + forty_minutes).dt.strftime("%H:%M")
+    open_time["at_three_til"] = (open_time["market_close"] - three_minutes).dt.strftime("%H:%M")
+    open_time["at_two_til"] = (open_time["market_close"] - two_minutes).dt.strftime("%H:%M")
+    open_time["at_one_til"] = (open_time["market_close"] - one_minute).dt.strftime("%H:%M")
+    open_time["buy_now"] = (open_time["market_close"] - twelve_seconds).dt.strftime('%H:%M:%S')
+    open_time["date"] = (open_time["market_open"]).dt.strftime("%Y-%m-%d")
+
+    open_time = open_time[
+        [
+            "date",
+            "at_09_30",
+            "at_10_10",
+            "at_three_til",
+            "at_two_til",
+            "at_one_til",
+            "buy_now",
+            "market_open",
+            "market_close",
+        ]
+    ]
+    open_time = open_time.reset_index(drop=True)
+
+    print("\\nIt is now", start_date, "and market hours for the next few days are\\n", open_time,"\\n")
+    open_time.to_csv("src/hours.csv", index=False)
 
     # save times as variables
-    opening_at = open_time.iloc[0, 0]
-    run_the_exits = open_time.iloc[0, 2]
-    run_the_scan = open_time.iloc[0, 3]
-    run_the_positions = open_time.iloc[0, 4]
-    update_the_files = open_time.iloc[0, 5]
+    selling_time = open_time.loc[0, "at_09_30"]
+    scan_time = open_time.loc[0, "at_one_til"]
+    buying_time = open_time.loc[0, "buy_now"]
 
-    opening = pd.Timestamp(opening_at)
-    todays_date = start_date.date()
-    first_market_date = opening.date()
+    date_today = str(start_date.date())
+    first_market_date = open_time.iloc[0, 0]
 
-    trading_day = True if (todays_date == first_market_date) else False
+    trading_day = True if (date_today == first_market_date) else False
 
-    # execute the exits file
-    def run_exits():
-        subprocess.run(["python", "exits.py"])
-        return schedule.CancelJob
+    # selling_time = '17:58:00'
 
-    # execute the scan file
-    def run_scan():
-        subprocess.run(["python", "scan.py"])
-        return schedule.CancelJob
-
-    # execute the positions file
-    def run_positions():
-        subprocess.run(["python", "positions.py"])
-        return schedule.CancelJob
-
-    # update github
-    def update_github():
-        g = Github('token goes here')
-        repo = g.get_user('p-norris').get_repo('swing_trades')
-
-        contents_h = repo.get_contents('src/history.csv')
-        contents_p = repo.get_contents('src/positions.csv')
-
-        his = 'C:/Users/phill/PycharmProjects/swing_trades/src/history.csv'
-        pos = 'C:/Users/phill/PycharmProjects/swing_trades/src/positions.csv'
-
-        with open(his, "r") as file:
-            new_h = file.read()
-        with open(pos, "r") as file:
-            new_p = file.read()
-
-        repo.update_file(contents_h.path, "updating file", new_h, contents_h.sha)
-        repo.update_file(contents_p.path, "updating file", new_p, contents_p.sha)
-
-        print('\\nGitHub has been updated.\\n')
-
-        return schedule.CancelJob
-
-    # if the market is open, schedule runs all the files
-    # positions runs 8 minutes after the scan which takes a while
-    # and the interface updates 1/6 of a minute later
     if trading_day:
-        schedule.every().monday.at(run_the_exits).do(run_exits)
-        schedule.every().monday.at(run_the_scan).do(run_scan)
-        schedule.every().monday.at(run_the_positions).do(run_positions)
-        schedule.every().monday.at(update_the_files).do(update_github)
-
-        schedule.every().tuesday.at(run_the_exits).do(run_exits)
-        schedule.every().tuesday.at(run_the_scan).do(run_scan)
-        schedule.every().tuesday.at(run_the_positions).do(run_positions)
-        schedule.every().tuesday.at(update_the_files).do(update_github)
-
-        schedule.every().wednesday.at(run_the_exits).do(run_exits)
-        schedule.every().wednesday.at(run_the_scan).do(run_scan)
-        schedule.every().wednesday.at(run_the_positions).do(run_positions)
-        schedule.every().wednesday.at(update_the_files).do(update_github)
-
-        schedule.every().thursday.at(run_the_exits).do(run_exits)
-        schedule.every().thursday.at(run_the_scan).do(run_scan)
-        schedule.every().thursday.at(run_the_positions).do(run_positions)
-        schedule.every().thursday.at(update_the_files).do(update_github)
-
-        schedule.every().friday.at(run_the_exits).do(run_exits)
-        schedule.every().friday.at(run_the_scan).do(run_scan)
-        schedule.every().friday.at(run_the_positions).do(run_positions)
-        schedule.every().friday.at(update_the_files).do(update_github)
+        print('\\nTrading Day Begins')
+        schedule.every().day.at(selling_time).do(selling)
+        schedule.every().day.at(scan_time).do(scaning)
+        schedule.every().day.at(buying_time).do(buying)
 
 
 # master schedule that starts the process
-schedule.every().monday.at("12:30").do(market_hours)
-schedule.every().tuesday.at("12:30").do(market_hours)
-schedule.every().wednesday.at("12:30").do(market_hours)
-schedule.every().thursday.at("12:30").do(market_hours)
-schedule.every().friday.at("12:30").do(market_hours)
+schedule.every().monday.at("08:45").do(weekly_tickers)
+schedule.every().monday.at("09:29:45").do(market_hours)
+schedule.every().tuesday.at("09:29:45").do(market_hours)
+schedule.every().wednesday.at("09:29:45").do(market_hours)
+schedule.every().thursday.at("09:29:45").do(market_hours)
+schedule.every().friday.at("09:29:45").do(market_hours)
 
 while True:
     schedule.run_pending()
     time.sleep(1)
+
 
 ''',
                      language="python",
