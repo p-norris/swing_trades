@@ -666,8 +666,7 @@ current_positions = current_positions.drop(columns=["Hit_94%", "Hit_97.5%", 'Hig
 current_positions["Target Price"] = current_positions["Target Price"].round(2)
 
 if len(current_positions) == 0:
-    diff_dataset = "No new positions. There are better days for trades. \
-                    Sitting this one out until the market shapes up."
+    diff_dataset = "No current positions."
     padding = 30
 else:
     diff_dataset = ""
