@@ -450,7 +450,7 @@ import time
 
 
 def begin():
-    print("\\n", "sellSchwab")
+    print("\\n", "Exits")
     time1 = pd.Timestamp.now()
     time1 = time1.floor(freq="s")
     print("\\n", time1)
@@ -2079,8 +2079,6 @@ def market_hours():
     first_market_date = open_time.iloc[0, 0]
 
     trading_day = True if (date_today == first_market_date) else False
-
-    # selling_time = '17:58:00'
 
     if trading_day:
         print('\\nTrading Day Begins')
