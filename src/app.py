@@ -1003,7 +1003,7 @@ app.layout = dbc.Container(
         dbc.Row(
             [
                 html.H6(
-                    "This dashboard updates in the evening after each trading session.",
+                    "This dashboard updates when stocks are sold, and just before the end of the trading session, new positions are taken.",
                     className="text-center",
                 ),
 
