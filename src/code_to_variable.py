@@ -1,20 +1,19 @@
 # scan - 9
-# positions - 300
-# exits - 434
-# interface - 717
-# app - 1981
+# positions - 299
+# exits - 433
+# interface - 716
+# app - 1980
 
 import dash_mantine_components as dmc
 
 scan_file = dmc.Prism('''
 """
-    The scan.py file downloads a year's worth of price data for
-    over 6,000 stocks. It then filters out stocks that do not
-    meet minimum criteria before generating moving averages data
-    and buy signals. It also determines price levels for selling
-    stocks. The data is sorted according to a few metrics and then
-    saved for the positions.py file to use in 'implementing' the 
-    trades.
+    After the tickers.py file downloads a year's worth of price data for
+    over 6,000 stocks, it then filters out stocks that do not meet minimum 
+    criteria. Then this scan.py file uses those tickers to generate moving
+    averages data and buy signals. It also determines price levels for 
+    selling stocks. The data is sorted according to a few metrics and then
+    saved for the positions.py file to use in 'implementing' the trades.
 """
 
 import pandas as pd
@@ -192,7 +191,7 @@ def high_close(df, nuro):
     return nuro
 
 
-def safe_from_harm(df, px, nuro):
+def safe_gain(df, px, nuro):
     target = []
     pxClose = df["Close"].astype(float)
     pxHigh = df["High"].astype(float)
@@ -272,7 +271,7 @@ if __name__ == "__main__":
 
         nuro = high_close(df, nuro)
 
-        pxClose, nuro = safe_from_harm(df, px, nuro)
+        pxClose, nuro = safe_gain(df, px, nuro)
 
         nuro = take_the_hit(nuro)
 
@@ -349,8 +348,6 @@ def num_holding():
 
 def dont_buy_these():
     scan = pd.read_csv("src/scan.csv")
-    if len(scan) == 0:
-        exit("\\nNothing to buy.\\n")
     positions = pd.read_csv("src/positions.csv")
     stocks = list(positions.STOCK)
     for stock in stocks:
@@ -360,6 +357,8 @@ def dont_buy_these():
 
 def buy_these(scan, buy_number):
     scan = scan.head(buy_number)
+    if len(scan) == 0:
+        quit("\\nNothing to buy.\\n")
     scan = scan.sort_values(["CLOSE"], ascending=False)
     buy_list = list(scan["STOCK"])
     return buy_list
@@ -450,13 +449,13 @@ import time
 
 
 def begin():
-    print("\\n", "Exits")
+    print("\\n", "sellSchwab")
     time1 = pd.Timestamp.now()
     time1 = time1.floor(freq="s")
     print("\\n", time1)
 
 
-def good_times():
+def get_times():
     hours = pd.read_csv("src/hours.csv")
     get_hit = hours.loc[0, "at_10_10"]
     two_til_four = hours.loc[0, "at_two_til"]
@@ -616,7 +615,8 @@ def get_money(stock_data, cashed_tickers, get_hit):
                 holding = False
                 break
             quote = price(ticker)
-            if price == -1: continue
+            if quote == -1: 
+                continue
             print("g_m_QUOTE at", time_now() + ':', ticker + ":", quote, "vs", gain, "<- target\n")
             if quote >= gain:
                 nuro = trade_record(ticker, quote)
@@ -642,7 +642,7 @@ def get_more_money(stock_data, cashed_tickers, holding, two_til_four, one_til_fo
             loss2 = this_stock[5]
             exit_date = this_stock[6]
             quote = price(ticker)
-            if price == -1:
+            if quote == -1:
                 continue
             right_now = time_now()
             print("g_m_m_QUOTE at", right_now + ':', ticker + ":", quote, "vs", gain, "<- target price\n")
@@ -2079,6 +2079,8 @@ def market_hours():
     first_market_date = open_time.iloc[0, 0]
 
     trading_day = True if (date_today == first_market_date) else False
+
+    # selling_time = '17:58:00'
 
     if trading_day:
         print('\\nTrading Day Begins')
