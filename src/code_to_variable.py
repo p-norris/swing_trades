@@ -2008,7 +2008,7 @@ def market_hours():
     # execute the trading file
     def selling():
         print('Selling')
-        subprocess.run(["python", "sell.py"])
+        subprocess.run(["python", "exits.py"])
         return schedule.CancelJob
 
     def scaning():
@@ -2018,7 +2018,7 @@ def market_hours():
 
     def buying():
         print('Buying')
-        subprocess.run(["python", "buy.py"])
+        subprocess.run(["python", "positions.py"])
         return schedule.CancelJob
 
     # start time is current time from which end time is determined
@@ -2067,7 +2067,8 @@ def market_hours():
     ]
     open_time = open_time.reset_index(drop=True)
 
-    print("\\nIt is now", start_date, "and market hours for the next few days are\\n", open_time,"\\n")
+    print("\\nIt is now", start_date, "and market hours for the next few days are\\n", 
+        open_time,"\\n")
     open_time.to_csv("src/hours.csv", index=False)
 
     # save times as variables
