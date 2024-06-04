@@ -9,7 +9,7 @@ import dash_mantine_components as dmc
 scan_file = dmc.Prism('''
 """
     After the tickers.py file downloads a year's worth of price data for
-    over 6,000 stocks, it then filters out stocks that do not meet minimum 
+    over 6,000 stocks, it filters out those that do not meet minimum 
     criteria. Then this scan.py file uses those tickers to generate moving
     averages data and buy signals. It also determines price levels for 
     selling stocks. The data is sorted according to a few metrics and then
@@ -76,7 +76,6 @@ def rolling_MAs(df):
 def testing(df):
     df["Target"] = (df["Close"]) * 1.011
     df["Max1"] = df["High"].shift(-1).round(2)
-    df["Max2"] = df["High"].shift(-2).round(2)
     df["Trigger"] = np.where(
         (
                 (df["Close"] >= df["MA3"])
@@ -2080,8 +2079,6 @@ def market_hours():
     first_market_date = open_time.iloc[0, 0]
 
     trading_day = True if (date_today == first_market_date) else False
-
-    # selling_time = '17:58:00'
 
     if trading_day:
         print('\\nTrading Day Begins')
